@@ -1,0 +1,742 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="J47erry">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="0x01 UAC白名单首先，如果父进程和子进程之间存在关系，即子进程从父进程中继承访问令牌，就可以绕过UAC，这是绕过UAC基础。 任何需要管理员访问令牌的程序都必须征得同意(即UAC弹窗)，但是存在一些具有白名单机制的系统程序，这些程序将会自动提升到管理员权限进行运行。因此，可以通过这些白名单来bypass UAC，以便获得高权限。 微软官方提供的Sigcheck和Strings工具，可以用来寻">
+<meta property="og:type" content="article">
+<meta property="og:title" content="#Bypass UAC之初体验">
+<meta property="og:url" content="https://j47erry.github.io/2022/12/05/Bypass-UAC%E4%B9%8B%E5%88%9D%E4%BD%93%E9%AA%8C/index.html">
+<meta property="og:site_name" content="J47erry&#39;S BLOG">
+<meta property="og:description" content="0x01 UAC白名单首先，如果父进程和子进程之间存在关系，即子进程从父进程中继承访问令牌，就可以绕过UAC，这是绕过UAC基础。 任何需要管理员访问令牌的程序都必须征得同意(即UAC弹窗)，但是存在一些具有白名单机制的系统程序，这些程序将会自动提升到管理员权限进行运行。因此，可以通过这些白名单来bypass UAC，以便获得高权限。 微软官方提供的Sigcheck和Strings工具，可以用来寻">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://j47erry.github.io/images/image-20221127150403965.png">
+<meta property="og:image" content="https://j47erry.github.io/images/image-20221127150432204.png">
+<meta property="og:image" content="https://j47erry.github.io/images/image-20221127141054828.png">
+<meta property="og:image" content="https://j47erry.github.io/images/image-20221127141130303.png">
+<meta property="og:image" content="https://j47erry.github.io/images/image-20221127141156730.png">
+<meta property="og:image" content="https://j47erry.github.io/images/image-20221127142307123.png">
+<meta property="og:image" content="https://j47erry.github.io/images/image-20221202165142543.png">
+<meta property="og:image" content="https://j47erry.github.io/images/image-20221202161013104.png">
+<meta property="og:image" content="https://j47erry.github.io/images/image-20221202161137409.png">
+<meta property="og:image" content="https://j47erry.github.io/images/image-20221202161527640.png">
+<meta property="og:image" content="https://j47erry.github.io/images/image-20221202161602993.png">
+<meta property="og:image" content="https://j47erry.github.io/images/image-20221204151125290.png">
+<meta property="og:image" content="https://j47erry.github.io/images/image-20221204151209620.png">
+<meta property="og:image" content="https://j47erry.github.io/images/image-20221204151305516.png">
+<meta property="og:image" content="https://j47erry.github.io/images/image-20221204151631372.png">
+<meta property="og:image" content="https://j47erry.github.io/images/image-20221130111432989.png">
+<meta property="og:image" content="https://j47erry.github.io/images/image-20221130112947341.png">
+<meta property="og:image" content="https://j47erry.github.io/images/image-20221205153834835.png">
+<meta property="article:published_time" content="2022-12-05T08:16:38.000Z">
+<meta property="article:modified_time" content="2022-12-05T08:16:10.301Z">
+<meta property="article:author" content="J47erry">
+<meta property="article:tag" content="提权">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://j47erry.github.io/images/image-20221127150403965.png">
+  
+  
+  
+  <title>#Bypass UAC之初体验 - J47erry&#39;S BLOG</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"j47erry.github.io","root":"/","version":"1.9.3","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 6.2.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>J47erry</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="#Bypass UAC之初体验"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2022-12-05 16:16" pubdate>
+          2022年12月5日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          23 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">#Bypass UAC之初体验</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="0x01-UAC白名单"><a href="#0x01-UAC白名单" class="headerlink" title="0x01 UAC白名单"></a>0x01 UAC白名单</h2><p>首先，如果父进程和子进程之间存在关系，即子进程从父进程中继承访问令牌，就可以绕过UAC，这是绕过UAC基础。</p>
+<p>任何需要管理员访问令牌的程序都必须征得同意(即UAC弹窗)，但是存在一些具有白名单机制的系统程序，这些程序将会自动提升到管理员权限进行运行。因此，可以通过这些白名单来bypass UAC，以便获得高权限。</p>
+<p>微软官方提供的Sigcheck和Strings工具，可以用来寻找白名单程序。</p>
+<p>String：  &#x2F;&#x2F;可以查找所有白名单程序</p>
+<figure class="highlight jboss-cli"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs jboss-cli">strings.exe <span class="hljs-string">/accepteula</span> -s C:\Windows\System32\*<span class="hljs-string">.exe</span> | findstr <span class="hljs-string">/i</span> <span class="hljs-string">&quot;autoElevate&quot;</span><br></code></pre></td></tr></table></figure>
+
+<p>Sigcheck： &#x2F;&#x2F;可以对特定的程序查询是否为白名单程序</p>
+<figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs vim">sigcheck.<span class="hljs-keyword">exe</span> /accepteula -<span class="hljs-keyword">m</span> C:\Windows\System32\ComputerDefaults.<span class="hljs-keyword">exe</span><br></code></pre></td></tr></table></figure>
+
+<p><strong>原理：</strong></p>
+<p>白名单程序拥有一个共同的特性，就是<strong>autoElevate</strong>属性的值为true。</p>
+<p><img src="/./../images/image-20221127150403965.png" srcset="/img/loading.gif" lazyload alt="image-20221127150403965"></p>
+<p><img src="/./../images/image-20221127150432204.png" srcset="/img/loading.gif" lazyload alt="image-20221127150432204"></p>
+<p>以CompMgmtLauncher.exe为例测试分析，因为它是白名单程序，所以运行时自动提升到高权限，没有uac弹窗。</p>
+<p>使用process monitor监视进程：</p>
+<p><img src="/./../images/image-20221127141054828.png" srcset="/img/loading.gif" lazyload alt="image-20221127141054828"></p>
+<p>找到shell的注册表，通常情况下，以“shell\open\command”命名的注册表中存储的可能就是可执行文件的路径，程序通过regopenkey&#x2F;regquerykey其中的键值并运行相应的可执行文件。</p>
+<p>修改键值对：</p>
+<figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs vim"><span class="hljs-keyword">reg</span> <span class="hljs-built_in">add</span> “HKCU\Software\Classes\mscfile\<span class="hljs-keyword">shell</span>\<span class="hljs-keyword">open</span>\<span class="hljs-keyword">command</span><span class="hljs-string">&quot; /d &quot;</span>C:\Windows\System32\cmd.<span class="hljs-keyword">exe</span><span class="hljs-comment">&quot; /f</span><br><br><span class="hljs-keyword">reg</span> <span class="hljs-built_in">add</span> “HKCU\Software\Classes\mscfile\<span class="hljs-keyword">shell</span>\<span class="hljs-keyword">open</span>\<span class="hljs-keyword">command</span><span class="hljs-string">&quot; /v DelegateExecute /t REG_SZ /d &quot;</span>C:\Windows\System32\cmd.<span class="hljs-keyword">exe</span><span class="hljs-comment">&quot; /f</span><br></code></pre></td></tr></table></figure>
+
+<p>（尝试了一下，直接在Editor修改并且不新建，也能成功）</p>
+<p><img src="/./../images/image-20221127141130303.png" srcset="/img/loading.gif" lazyload alt="image-20221127141130303"></p>
+<p>运行之后，弹出cmd弹窗，可以完成新建用户的高权限操作，并且没有UAC弹窗：</p>
+<p><img src="/./../images/image-20221127141156730.png" srcset="/img/loading.gif" lazyload alt="image-20221127141156730"></p>
+<p><img src="/./../images/image-20221127142307123.png" srcset="/img/loading.gif" lazyload alt="image-20221127142307123"></p>
+<h2 id="0x02-DLL劫持"><a href="#0x02-DLL劫持" class="headerlink" title="0x02 DLL劫持"></a>0x02 DLL劫持</h2><p>当应用程序启动时，相应的DLL文件就会被加载到程序进程的内存空间，</p>
+<p>如果没有指定DLL的绝对路径，那么程序会以特定的顺序依次搜索待加载的DLL，</p>
+<p>SafeDllSearchMode：</p>
+<figure class="highlight mathematica"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs mathematica">程序安装目录——<span class="hljs-operator">&gt;</span>系统目录（<span class="hljs-built_in">C</span><span class="hljs-operator">:</span>\<span class="hljs-variable">Windows</span>\<span class="hljs-variable">System32</span>）——<span class="hljs-operator">&gt;</span><span class="hljs-number">16</span>位系统目录（<span class="hljs-built_in">C</span><span class="hljs-operator">:</span>\<span class="hljs-variable">Windows</span>\<span class="hljs-variable">System</span>）——<span class="hljs-operator">&gt;</span><span class="hljs-variable">Windows</span>目录（<span class="hljs-built_in">C</span><span class="hljs-operator">:</span>\<span class="hljs-variable">Windows</span>）——<span class="hljs-operator">&gt;</span>当前工作目录——<span class="hljs-operator">&gt;</span><span class="hljs-variable">PATH</span>环境变量中列出的各目录<br></code></pre></td></tr></table></figure>
+
+<p><strong>原理：</strong></p>
+<p>如果将同名的恶意DLL文件放在合法DLL文件所在路径之前的搜索位置，当应用程序搜索DLL时，就会以恶意DLL代替合法的DLL来加载。</p>
+<p><strong>前提：</strong></p>
+<ol>
+<li>对上诉目录有写入权限</li>
+<li>恶意DLL需要与原始DLL拥有相同的导出表函数</li>
+</ol>
+<p>System32目录下易受到DLL劫持攻击的所有可执行文件：</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/wietze/windows-dll-hijacking/blob/master/dll_hijacking_candidates.csv">https://github.com/wietze/windows-dll-hijacking/blob/master/dll_hijacking_candidates.csv</a></p>
+<p><img src="/./../images/image-20221202165142543.png" srcset="/img/loading.gif" lazyload alt="image-20221202165142543"></p>
+<p>白名单文件自动获取高权限需要满足三个条件（缺一不可）：</p>
+<ol>
+<li>Manifest中autoElevate属性字段为true。</li>
+<li>执行可执行文件的签名。</li>
+<li>位于系统可信任目录。</li>
+</ol>
+<p>首先，构造第3个条件，系统在检查可信任目录时，相关函数会自动去掉可执行文件路劲中的空格，因此可以模拟可信任目录，（测试的可执行文件是WinSAT.exe）</p>
+<figure class="highlight wren"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs wren"><span class="hljs-variable">md</span> <span class="hljs-string">&quot;<span class="hljs-char escape_">\\</span>?\C:\Windows &quot;</span><br><span class="hljs-variable">md</span> <span class="hljs-string">&quot;<span class="hljs-char escape_">\\</span>?\C:\Windows \System32&quot;</span><br><span class="hljs-variable">copy</span> <span class="hljs-variable">C</span>:\<span class="hljs-title class_">Windows</span>\<span class="hljs-title class_">System</span>32\<span class="hljs-title class_">Win</span>SAT.<span class="hljs-property">exe</span> <span class="hljs-string">&quot;<span class="hljs-char escape_">\\</span>?\C:\Windows \System32\WinSAT.exe&quot;</span><br></code></pre></td></tr></table></figure>
+
+<p><img src="/./../images/image-20221202161013104.png" srcset="/img/loading.gif" lazyload alt="image-20221202161013104"></p>
+<p>查看C盘就可以发现有两个Windows文件，其中有个文件夹是最近的创建时间（我虚拟机刚好更新了，所以看起来两个文件夹时间相差不多。。。）：</p>
+<p><img src="/./../images/image-20221202161137409.png" srcset="/img/loading.gif" lazyload alt="image-20221202161137409"></p>
+<p>使用process Monitor监控一下exe调用的DLL：</p>
+<p><img src="/./../images/image-20221202161527640.png" srcset="/img/loading.gif" lazyload alt="image-20221202161527640"></p>
+<p>可以追踪到，程序在尝试调用伪造的Windows文件夹，但是都失败了，</p>
+<p>尝试伪造一个WINMM.dll，借用工具AheadLib工具获取dll文件导出表函数，并自动生成C++函数，</p>
+<p><img src="/./../images/image-20221202161602993.png" srcset="/img/loading.gif" lazyload alt="image-20221202161602993"></p>
+<p>在DLLMAIN函数中添加测试命令，</p>
+<p><img src="/./../images/image-20221204151125290.png" srcset="/img/loading.gif" lazyload alt="image-20221204151125290"></p>
+<p>编译生成dll文件，</p>
+<p><img src="/./../images/image-20221204151209620.png" srcset="/img/loading.gif" lazyload alt="image-20221204151209620"></p>
+<p>放入文件夹，点击报错，</p>
+<p><img src="/./../images/image-20221204151305516.png" srcset="/img/loading.gif" lazyload alt="image-20221204151305516"></p>
+<p>去把缺少的dll文件复制过去，成功bypass UAC运行，</p>
+<p><img src="/./../images/image-20221204151631372.png" srcset="/img/loading.gif" lazyload alt="image-20221204151631372"></p>
+<h2 id="0x03-利用工具bypass-UAC"><a href="#0x03-利用工具bypass-UAC" class="headerlink" title="0x03 利用工具bypass UAC"></a>0x03 利用工具bypass UAC</h2><p><strong>MSF：</strong></p>
+<p>里面很多自带模块可以使用，</p>
+<p><img src="/./../images/image-20221130111432989.png" srcset="/img/loading.gif" lazyload alt="image-20221130111432989"></p>
+<p>获取会话后，提权失败，（测试过程被杀掉断掉连接了。。。）</p>
+<p><img src="/./../images/image-20221130112947341.png" srcset="/img/loading.gif" lazyload alt="image-20221130112947341"></p>
+<p>直接设置会话就行了，可直接提升至system权限。</p>
+<p><strong>UACME：</strong></p>
+<p>专用于绕过Windows UAC的开源项目，</p>
+<p><img src="/./../images/image-20221205153834835.png" srcset="/img/loading.gif" lazyload alt="image-20221205153834835"></p>
+<p>工具使用很简单，手撕代码分析原理还是太菜了，，，</p>
+<hr>
+<p>参考文章：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs awk">在Windows中劫持DLL————https:<span class="hljs-regexp">//</span>cloud.tencent.com<span class="hljs-regexp">/developer/</span>article/<span class="hljs-number">1850848</span><br><br>BypassUAC————https:<span class="hljs-regexp">//</span>www.cnblogs.com<span class="hljs-regexp">/cxccc/</span>p/<span class="hljs-number">12732976</span>.html<br><br>“FILELESS” UAC BYPASS USING EVENTVWR.EXE AND REGISTRY HIJACKING————https:<span class="hljs-regexp">//</span>enigma0x3.net<span class="hljs-regexp">/2016/</span><span class="hljs-number">08</span><span class="hljs-regexp">/15/</span>fileless-uac-bypass-using-eventvwr-exe-and-registry-hijacking/<br><br>Exploring Windows UAC Bypasses: Techniques and Detection Strategies————https:<span class="hljs-regexp">//</span>www-elastic-co.translate.goog<span class="hljs-regexp">/security-labs/</span>exploring-windows-uac-bypasses-techniques-and-detection-strategies?_x_tr_sl=en&amp;_x_tr_tl=zh-CN&amp;_x_tr_hl=zh-CN&amp;_x_tr_pto=sc<br></code></pre></td></tr></table></figure>
+
+
+
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E7%AC%94%E8%AE%B0/" class="category-chain-item">笔记</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E6%8F%90%E6%9D%83/">#提权</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>#Bypass UAC之初体验</div>
+      <div>https://j47erry.github.io/2022/12/05/Bypass-UAC之初体验/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>J47erry</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2022年12月5日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/12/10/Dll%E5%8A%AB%E6%8C%81%E5%88%9D%E4%BD%93%E9%AA%8C/" title="#Dll劫持初体验">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">#Dll劫持初体验</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/11/24/%E9%9A%90%E5%86%99%E6%9C%AF/" title="#隐写过360、火绒">
+                        <span class="hidden-mobile">#隐写过360、火绒</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
