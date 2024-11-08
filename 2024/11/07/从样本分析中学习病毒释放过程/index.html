@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
+    <link rel="alternate icon" type="image/png" href="/img/favicon.png">
+    <title>J47erry&#39;S BLOG | 杰歪</title>
+    
+<link rel="stylesheet" href="/css/reset.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<link rel="stylesheet" href="/css/markdown.css">
+
+    
+<link rel="stylesheet" href="/css/fonts.css">
+
+<meta name="generator" content="Hexo 6.2.0"></head>
+    <body>
+        <div class="paper">
+            <div class="paper-main">
+                
+                    <div class="post-header">
+    <a class="logo" href="/">J47erry&#39;S BLOG</a>
+    <a class="go-home" href="/">
+        <svg width="8" height="14" viewBox="0 0 8 14">
+            <path d="M7 1L1 7l6 6" stroke="#000" stroke-width="2" fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </a>
+</div>
+                
+                <div class="post-main">
+
+    
+        <div class="post-main-title">
+            #从样本分析中学习病毒释放过程
+        </div>
+        <div class="post-meta">
+            2024-11-07
+        </div>
+    
+
+    <div class="post-md">
+        <hr>
+<p>本文首发于先知社区，原文链接：<a target="_blank" rel="noopener" href="https://xz.aliyun.com/t/16027?time__1311=GuD=YK0KBI8x/D0ltd0QritEZ8sjAeD">https://xz.aliyun.com/t/16027?time__1311=GuD%3DYK0KBI8x%2FD0ltd0QritEZ8sjAeD</a></p>
+<h2 id="静态分析"><a href="#静态分析" class="headerlink" title="静态分析"></a>静态分析</h2><p>通过编写的py脚本，对目标样本先进行简单的静态分析，</p>
+<h4 id="Section"><a href="#Section" class="headerlink" title="Section"></a>Section</h4><p><img src="/images/image-20241014122857901.png" alt="image-20241014122857901"></p>
+<p>对样本的结构有了大致了解，结构呈现完整，虚拟内存和内存大小没有发现明显异常，初步判断可能没有加壳，可以通过工具分析，这里只是为了练手。</p>
+<p>具体代码如下：</p>
+<pre><code class="python">import pefile
+pe = pefile.PE(&quot;ircbot.exe&quot;)
+for section in pe.sections:
+    print(section.Name,hex(section.VirtualAddress),hex(section.Misc_VirtualSize),section.SizeOfRawData)
+</code></pre>
+<h4 id="IAT表"><a href="#IAT表" class="headerlink" title="IAT表"></a>IAT表</h4><p><img src="/./../images/image-20241014123518027.png" alt="image-20241014123518027"></p>
+<p><img src="/./../images/image-20241014123656578.png" alt="image-20241014123656578"></p>
+<p>对调用的dll文件列举较为详细，这里也可以通过IDA进行查看，</p>
+<p><img src="/./../images/image-20241014123748889.png" alt="image-20241014123748889"></p>
+<p>具体代码如下：</p>
+<pre><code class="python">import pefile
+pe = pefile.PE(&quot;ircbot.exe&quot;)
+for entry in pe.DIRECTORY_ENTRY_IMPORT:
+    print entry.dll
+    for function in entry.imports:
+        print &#39;\t&#39;,function.name
+</code></pre>
+<p>基本确定没有加壳迹象。</p>
+<h4 id="字符串"><a href="#字符串" class="headerlink" title="字符串"></a>字符串</h4><p><img src="/./../images/image-20241014124048015.png" alt="image-20241014124048015"></p>
+<p>生成txt文档，可以看到很多自启动的注册表路径，</p>
+<p><img src="/./../images/image-20241014124334678.png" alt="image-20241014124334678"></p>
+<p>对这些还不熟悉，一一搜索我觉得可能异常的字符串，</p>
+<p><img src="/./../images/image-20241014124711864.png" alt="image-20241014124711864"></p>
+<p>这里是删除 <code>admin$</code> 共享，可能用于防止远程管理员通过这个共享路径检测到恶意活动或对系统进行修复。</p>
+<p><img src="/./../images/image-20241014124947500.png" alt="image-20241014124947500"></p>
+<p>这里也表明目标样本尝试隐藏文件，避免被检测到。</p>
+<p><img src="/./../images/image-20241014132346281.png" alt="image-20241014132346281"></p>
+<p>这里有尝试密码爆破的迹象。</p>
+<p><img src="/./../images/image-20241014132550250.png" alt="image-20241014132550250"></p>
+<ul>
+<li>**[AutoRun]**：这是 <code>autorun.inf</code> 文件的标准部分，定义了自动运行的行为。</li>
+<li><strong>OPEN&#x3D;setup.exe</strong>：当用户双击驱动器时，将自动运行 <code>setup.exe</code> 程序。</li>
+<li><strong>shellexecute&#x3D;setup.exe</strong>：通过 Windows Shell 执行 <code>setup.exe</code> 文件。</li>
+<li><strong>shell\Auto\command&#x3D;setup.exe</strong>：这进一步定义了运行 <code>setup.exe</code> 的命令。</li>
+</ul>
+<p>此类 <code>autorun.inf</code> 文件通常用于通过可移动驱动器（如 USB 驱动器）传播恶意软件。当驱动器连接到系统时，它会自动执行恶意文件，感染新的系统。</p>
+<p>通过字符串的简单分析，该目标样本有自启动和隐藏以及密码窃取或弱密码破解的迹象，但可能存在疏漏。</p>
+<p>结合GPT分析，还存在Windows内核交互，伪装和逃避检测等行为。</p>
+<h4 id="HASH"><a href="#HASH" class="headerlink" title="HASH"></a>HASH</h4><p><img src="/./../images/image-20241014125307709.png" alt="image-20241014125307709"></p>
+<p>哈希值可以用来指纹识别。</p>
+<p>这里还可以用wrestool命令行对目标样本做一个可提取资源的分析。</p>
+<h3 id="动态分析"><a href="#动态分析" class="headerlink" title="动态分析"></a>动态分析</h3><p>大致思路：</p>
+<p>1.运行procmon，设置过滤器，并在运行前清除所有事件。</p>
+<p>2.使用Regshot收集注册表的第一个快照</p>
+<p>3.使用Wireshark捕获网络流量日志</p>
+<p><img src="/./../images/image-20241017155634131-1729152331224-1.png" alt="image-20241017155634131"></p>
+<p>process tree显示样本通过创造spoclsv.exe进行活动，</p>
+<p><img src="/./../images/image-20241017155948686-1729152372462-3.png" alt="image-20241017155948686"></p>
+<p>这一块分析的时候很奇怪，没有捕获到目标样本的具体操作，可能是我学艺不精，并没有分析完毕。</p>
+<h3 id="逆向分析"><a href="#逆向分析" class="headerlink" title="逆向分析"></a>逆向分析</h3><p>IDA进入主函数，主要对功能函数进行一一分析，目的在于了解目标样本的执行逻辑，</p>
+<p><img src="/./../images/image-20241017134742036.png" alt="image-20241017134742036"></p>
+<h4 id="sub-4049E8"><a href="#sub-4049E8" class="headerlink" title="sub_4049E8"></a>sub_4049E8</h4><p>点击这个函数，可以看到这个函数逻辑较为简单，</p>
+<p><img src="/./../images/image-20241017135102856.png" alt="image-20241017135102856"></p>
+<p>GetModuleHandleA获取模块句柄，其他两个函数点进去，发现都是对寄存器进行一些初始化的操作，可以明确整个函数是对初始化全局变量、获取模块句柄的操作，没有深究必要。</p>
+<h4 id="sub-403C98"><a href="#sub-403C98" class="headerlink" title="sub_403C98"></a>sub_403C98</h4><p><img src="/./../images/image-20241017135636468.png" alt="image-20241017135636468"></p>
+<p>结合上下文，这个函数可能对eax和edx两个寄存器的值进行一些操作，</p>
+<p>下面主要针对第一个sub_403C98进行分析，我们首先看前两个mov对两个寄存器存入了什么值，</p>
+<p>dword_40E7D4传入eax，点击发现，这个地方是一个全局变量，暂时没有意义，</p>
+<p><img src="/./../images/image-20241017135931992.png" alt="image-20241017135931992"></p>
+<p>同理，针对edx点击，</p>
+<p><img src="/./../images/image-20241017140017735.png" alt="image-20241017140017735"></p>
+<p>很多十六进制的数据，alt+a试试，</p>
+<p><img src="/./../images/image-20241017140616141.png" alt="image-20241017140616141"></p>
+<p>可以看到edx传入了这样的一个文本信息，接下来对sub_403C98做了什么进行分析，</p>
+<p><img src="/./../images/image-20241017140919345.png" alt="image-20241017140919345"></p>
+<p>可以清楚看到sub_403C98通过一些push和pop进行了一系列的数据处理，同时发现了sub_403D08和sub_402650这两个函数，继续点击深入，</p>
+<p><img src="/./../images/image-20241017142809038.png" alt="image-20241017142809038"></p>
+<p>跟套娃一样，</p>
+<p><img src="/./../images/image-20241017142903740.png" alt="image-20241017142903740"></p>
+<p>这里一个函数指针来进行间接调用，该地址可能会在运行时动态加载一个函数或 API 函数，需要结合OD进行分析，</p>
+<p><img src="/./../images/image-20241017143027758.png" alt="image-20241017143027758"></p>
+<p>找到这里设置断点，F9运行到这里，然后F7进入call内部进行分析，</p>
+<p><img src="/./../images/image-20241017143135898.png" alt="image-20241017143135898"></p>
+<p>可以看到这里函数指针又指向了一个call，同理，在OD中继续F7，</p>
+<p><img src="/./../images/image-20241017143407909.png" alt="image-20241017143407909"></p>
+<p>发现很多Windows API函数，</p>
+<ul>
+<li>InitializeCriticalSection：初始化一个临界区用于线程同步。</li>
+<li>EnterCriticalSection：进入临界区，锁定资源，确保只有一个线程可以访问共享资源。</li>
+<li>LocallAlloc：在本地堆上分配内存，适用于动态内存管理。</li>
+</ul>
+<p>基本就确定了这个sub_403D08的功能，即分配一定大小的内存空间。</p>
+<p>对sub_402650同理，但是这个函数没有很多call，</p>
+<p><img src="/./../images/image-20241017144131100.png" alt="image-20241017144131100"></p>
+<p>直接看汇编语言，可以看到有rep movsd等命令，这是一个典型的内存拷贝函数，用于将数据从源地址复制到目标地址。</p>
+<p>在od中进行运行，也可以在数据中看见传输的数据，进一步确定这是一个字符串拷贝函数，</p>
+<p><img src="/./../images/image-20241017144806451.png" alt="image-20241017144806451"></p>
+<p><strong>总结</strong>：sub_403C98是要实现了内存分配和字符串拷贝的功能。</p>
+<h4 id="sub-405360"><a href="#sub-405360" class="headerlink" title="sub_405360"></a>sub_405360</h4><p><img src="/./../images/image-20241017145103629.png" alt="image-20241017145103629"></p>
+<p>进行这个函数之前，传入了两个文本信息已经呈现，主要看这个函数做了什么，</p>
+<p>进入窗口模式，有点长，并且还包含一个循环，</p>
+<p><img src="/./../images/image-20241017145352567.png" alt="image-20241017145352567"></p>
+<p>一步一步分析，</p>
+<p>在没有进入循环之前，call了一个函数sub_4040BC，</p>
+<p><img src="/./../images/image-20241017145642635.png" alt="image-20241017145642635"></p>
+<p>点进去这个函数，</p>
+<p><img src="/./../images/image-20241017145726781.png" alt="image-20241017145726781"></p>
+<p>lock上锁，确保进程的原子性，没必要深究，主要分析循环函数，</p>
+<p><img src="/./../images/image-20241017145930655.png" alt="image-20241017145930655"></p>
+<p>这里有三个call：sub_403ECC、sub_403E2C和sub_403ED4。</p>
+<p><strong>sub_403ECC：</strong></p>
+<p><img src="/./../images/image-20241017150321579.png" alt="image-20241017150321579"></p>
+<p>逻辑简单，数据检查函数。</p>
+<p><strong>sub_403E2C：</strong></p>
+<p><img src="/./../images/image-20241017150414889.png" alt="image-20241017150414889"></p>
+<p>这里逻辑比较简单，再挖一层，发现这个调用了之前分析的内存分配和字符串函数，</p>
+<p><img src="/./../images/image-20241017150638101.png" alt="image-20241017150638101"></p>
+<p>sub_403E2C给下一层函数传递了esp和常量1用来内存分配和字符串拷贝，它的作用可能是在处理数据时准备某些特定参数或进行简单的内存操作。</p>
+<p><strong>sub_403ED4：</strong></p>
+<p><img src="/./../images/image-20241017151516131.png" alt="image-20241017151516131"></p>
+<p>这里还是对数据的一系列处理。</p>
+<p>这三个函数都是对数据字符的一个处理，没有对最开始的循环函数进行大体分析，直接扎进去了，导致分析到这里有点无语，，，</p>
+<p>重新看循环函数的汇编语言，可以很清楚地看到它通过一系列的除法、加载和位运算操作，对数据进行处，然后在通过这三个函数进行实现，进入OD看具体对数据进行了什么处理。</p>
+<p><img src="/./../images/image-20241017152830630.png" alt="image-20241017152830630"></p>
+<p>直接定位到循环函数进入内部F8快速运行，然后追踪edx的值，可以发现这段代码逻辑就是将前面的传入的文本信息，进行解密的过程。</p>
+<h4 id="sub-404018："><a href="#sub-404018：" class="headerlink" title="sub_404018："></a>sub_404018：</h4><p><img src="/./../images/image-20241017153155589.png" alt="image-20241017153155589"></p>
+<p>这个函数逻辑图也比较长，但是都是条件判断的一个流程，不存在循环，同时，也没有call函数。</p>
+<p><img src="/./../images/image-20241017153853036.png" alt="image-20241017153853036"></p>
+<p>结合上下文，解密以后进入这个函数，并结合汇编代码分析，这里应该是一个比较字符串的过程。</p>
+<p>到这里样本的第一部分我们已经分析完毕，回到EP的地方，回看整个逻辑结合注释，清晰明了，</p>
+<p><img src="/./../images/image-20241017154233132.png" alt="image-20241017154233132"></p>
+<p>小小总结一下第一部分的分析，不要一头扎入细节的分析，主要是判断样本的功能，以及对于一些数据的处理，结合OD可以更快的得出结论。</p>
+<p>接下来，是对下一级流程call的分析，</p>
+<p><img src="/./../images/image-20241017154559670.png" alt="image-20241017154559670"></p>
+<h4 id="sub-408024"><a href="#sub-408024" class="headerlink" title="sub_408024"></a>sub_408024</h4><p><img src="/./..images/image-20241018140009162.png" alt="image-20241018140009162"></p>
+<p>打开sub_408024函数，流程图挺长，看起来挺复杂，配合OD一个一个分析call函数，</p>
+<p><strong>sub_40277C：</strong></p>
+<p><img src="/./../images/image-20241018140140189.png" alt="image-20241018140140189"></p>
+<p>GetModuleFileNameA函数显示指定模块或当前进程的完全限定路径，下面是官方文档给的介绍：</p>
+<p><img src="/./../images/image-20241018140519620.png" alt="image-20241018140519620"></p>
+<p>放在OD里面运行到这里看看，会取得什么路径，</p>
+<p><img src="/./../images/image-20241018140840494.png" alt="image-20241018140840494"></p>
+<p>Follow一下buffer，</p>
+<p><img src="/./../images/image-20241018140923857.png" alt="image-20241018140923857"></p>
+<p><img src="/./../images/image-20241018141236980.png" alt="image-20241018141236980"></p>
+<p>可以在数据窗口看到样本的路径，下面还有一个sub_403D34函数，点开发现调用了第一部分分析的分配内存和拼接的函数，总得来说，sub_40277C函数主要功能是<strong>获取样本运行的路径</strong>。</p>
+<p><strong>sub_405684：</strong></p>
+<p><img src="/./../images/image-20241018141613433.png" alt="image-20241018141613433"></p>
+<p>放到OD里面进行分析，</p>
+<p><img src="/./../images/image-20241018142145899.png" alt="image-20241018142145899"></p>
+<p>在数据中看到eax当前的值是获取的路径，F8一步一步执行，看看它要干什么，</p>
+<p><img src="/./../images/image-20241018142332001.png" alt="image-20241018142332001"></p>
+<p>在循环内部执行，程序主要是对路径字符串从后向前进行了遍历，并且在检查到“\”的时候跳出了循环，</p>
+<p><img src="/./../images/image-20241018142544781.png" alt="image-20241018142544781"></p>
+<p>不难得出这个函数主要用来获取当前样本的名称信息，</p>
+<p><img src="/./../images/image-20241018142654270.png" alt="image-20241018142654270"></p>
+<p>IDA中也可以看到对于“\”、“&#x2F;”和“：”的字符串进行了判断。sub_405684主要功能<strong>获取样本的名称信息</strong>。</p>
+<p><strong>sub_403ED4：</strong></p>
+<p><img src="/./../images/image-20241018143011887.png" alt="image-20241018143011887"></p>
+<p>在执行这个函数之前，传入了一个参数“Desktop_.ini”，</p>
+<p><img src="/./../images/image-20241018143117251.png" alt="image-20241018143117251"></p>
+<p>这里可能是对传入字符串的一个处理，用OD看看具体做了什么，</p>
+<p><img src="/./../images/image-20241018143655375.png" alt="image-20241018143655375"></p>
+<p>可以在数据中看到传入的字符串Desktop_.ini对前面获取到的样本名称做了一个替换。sub_403ED4主要功能是<strong>在路径中替换当前样本名称</strong>。</p>
+<p><strong>sub_4057A4：</strong></p>
+<p><img src="/./../images/image-20241018144104436.png" alt="image-20241018144104436"></p>
+<p>点开子函数sub_40573C，</p>
+<p><img src="/./../images/image-20241018145719347.png" alt="image-20241018145719347"></p>
+<p>调用了很多Windows API，可以通过官方文档查询，这些API函数主要用来搜索文件以及文件的时间，</p>
+<p><img src="/./../images/image-20241018145845943.png" alt="image-20241018145845943"></p>
+<p>在od中，可以看到是对desktop_.ini文件进行搜索，所以sub_4057A4主要功能是<strong>判断目标文件存在与否</strong>。</p>
+<p><img src="/./../images/image-20241018150250694.png" alt="image-20241018150250694"></p>
+<p>sub_408024到此具有了一定的可读性，继续分析，</p>
+<p><strong>sub_4078E0：</strong></p>
+<p>写入病毒信息到内存中，病毒作者企图利用暴力P解的方式，来攻破计算机中的某些验证机制。</p>
+<p><img src="/./../images/image-20241026160726649.png" alt="image-20241026160726649"></p>
+<ul>
+<li>如何获取文件？</li>
+<li>获取哪些指定文件？</li>
+<li>如何写入病毒信息？</li>
+<li>写入了哪些信息？</li>
+<li>绕过了哪些验证机制？</li>
+</ul>
+<p><img src="/./../images/image-20241026160949939.png" alt="image-20241026160949939"></p>
+<p>循环五次对 <code>eax</code> 的值操作，并将 <code>esp</code> 减去一个非常大的偏移量，主要目的应该是为了给这个函数分配足够的内存来进行下面的操作。</p>
+<p>接着看，</p>
+<p><img src="/./../images/image-20241026161517632.png" alt="image-20241026161517632"></p>
+<p><img src="/./../images/image-20241026162209811.png" alt="image-20241026162209811"></p>
+<p>这段代码的主要作用是初始化一些变量，然后调用sub_4040BC进行上锁，确保操作的安全性。</p>
+<p>接下来，设置了两个嵌套的SEH（结构化异常处理）处理程序，</p>
+<p><img src="/./../images/image-20241026162531202.png" alt="image-20241026162531202"></p>
+<p><img src="/./../images/image-20241026165241647.png" alt="image-20241026165241647"></p>
+<p><code>push offset loc_407A36</code> 将异常处理程序地址（<code>loc_407A36</code>）压入栈顶；</p>
+<p><code>mov fs:[eax], esp</code> 设置新的异常处理程序（通过 <code>fs</code> 段寄存器）进入 SEH 链中。</p>
+<p>通过这种方式设置的异常处理例程可以捕获函数内的错误并转移控制权到特定的错误处理代码中。</p>
+<p>第一个异常处理，</p>
+<p><img src="/./../images/image-20241026170243995.png" alt="image-20241026170243995"></p>
+<p><strong>参数传递</strong>:</p>
+<ul>
+<li><code>mov eax, [esp+arg_0]</code>: 将第一个参数（指针）存入 <code>eax</code>。</li>
+<li><code>mov edx, [esp+arg_4]</code>: 将第二个参数存入 <code>edx</code>。</li>
+</ul>
+<p><strong>检查异常状态</strong>:</p>
+<ul>
+<li><code>test dword ptr [eax+4], 6</code>: 检查 <code>eax</code> 指向的结构中的某个字段，判断是否符合特定条件。</li>
+<li><code>jz short loc_403694</code>: 如果条件不满足，跳转到 <code>loc_403694</code>。</li>
+</ul>
+<p><strong>设置异常处理函数</strong>:</p>
+<ul>
+<li><code>mov ecx, [edx+4]</code>: 从第二个参数读取处理函数的地址。</li>
+<li><code>mov dword ptr [edx+4], offset loc_403694</code>: 将异常处理函数的地址设置为一个特定的跳转地址。</li>
+</ul>
+<p><strong>调用异常处理逻辑</strong>:</p>
+<ul>
+<li><code>call sub_4034D4</code>: 调用一个函数进行异常处理逻辑的设置。</li>
+</ul>
+<p><strong>执行异常处理</strong>:</p>
+<ul>
+<li><code>call ecx</code>: 调用之前设置的处理函数。</li>
+</ul>
+<p><strong>返回处理结果</strong>:</p>
+<ul>
+<li>如果一切正常，返回 <code>1</code>。</li>
+</ul>
+<p><strong>异常跳转</strong>:</p>
+<ul>
+<li>如果未满足之前的条件，跳转到 <code>loc_403694</code>，并返回 <code>1</code>。</li>
+</ul>
+<p>第二个异常处理，</p>
+<p><img src="/./../images/image-20241026170725856.png" alt="image-20241026170725856"></p>
+<p>第二个异常处理函数比较复杂，可以看到在必要时还调用系统级的异常处理程序UnhandledExceptionFilter。</p>
+<p><strong>获取异常信息</strong>:</p>
+<ul>
+<li><code>mov eax, [esp+ExceptionInfo.ExceptionRecord]</code>: 将异常记录结构的指针存入 <code>eax</code>。</li>
+</ul>
+<p><strong>检查异常状态</strong>:</p>
+<ul>
+<li><code>test dword ptr [eax+4], 6</code>: 检查异常记录的某个字段是否满足条件。</li>
+<li><code>jnz loc_40365C</code>: 如果条件满足，跳转到处理逻辑。</li>
+</ul>
+<p><strong>获取异常代码</strong>:</p>
+<ul>
+<li><code>cmp dword ptr [eax], 0EEDFADEh</code>: 检查异常代码是否为特定值（0EEDFADEh）。</li>
+<li><code>mov edx, [eax+18h]</code> 和 <code>mov ecx, [eax+14h]</code>: 获取异常记录中的其他重要字段。</li>
+</ul>
+<p><strong>调用处理逻辑</strong>:</p>
+<ul>
+<li><code>call sub_40326C</code>: 调用一个处理函数，可能用于进一步分析异常信息。</li>
+<li><code>mov edx, ds:dword_40E00C</code>: 获取另一个处理函数的指针。</li>
+<li><code>test edx, edx</code>: 检查这个指针是否为空。</li>
+<li><code>call edx</code>: 如果不为空，调用这个处理函数。</li>
+</ul>
+<p><strong>判断异常类型</strong>:</p>
+<ul>
+<li><code>cmp dword ptr [esp+arg_8], 0EEFFACEh</code>: 比较某个值以确定异常的类型。</li>
+<li><code>call sub_403464</code>: 如果不匹配，调用另一个处理函数。</li>
+</ul>
+<p><strong>处理返回值</strong>:</p>
+<ul>
+<li><code>cmp ds:byte_40D01C, 0</code>: 检查一个全局状态标志，决定是否调用 <code>UnhandledExceptionFilter</code>。</li>
+<li><code>call UnhandledExceptionFilter</code>: 如果需要，调用这个系统函数处理未处理的异常。</li>
+</ul>
+<p><strong>异常过滤和处理</strong>:</p>
+<ul>
+<li>根据条件，可能会再次调用 <code>UnhandledExceptionFilter</code> 来处理异常。</li>
+<li><code>or dword ptr [eax+4], 2</code>: 更新异常记录的状态。</li>
+</ul>
+<p><strong>设置SEH链</strong>:</p>
+<ul>
+<li>保存当前的SEH链，并设置新的处理函数。</li>
+<li><code>call sub_40499C</code>: 可能是一个函数，用于处理特定的异常或状态。</li>
+<li><code>mov dword ptr [edi+4], offset loc_40363C</code>: 设置新的异常处理地址。</li>
+</ul>
+<p><strong>跳转到处理逻辑</strong>:</p>
+<ul>
+<li><code>jmp ebx</code>: 跳转到处理逻辑，继续执行异常处理。</li>
+</ul>
+<p>第一个SEH处理常规错误，第二个则处理更严重或特殊的异常，这些操作可以绕过计算机的某些错误检测。</p>
+<p>接着往下看，有个经常出现的函数sub_402614</p>
+<p><img src="/./../images/image-20241026172212455.png" alt="image-20241026172212455"></p>
+<p><img src="/./../images/image-20241026172231251.png" alt="image-20241026172231251"></p>
+<p>通过TlsGetValue检索调用线程的线程本地存储中的值。</p>
+<p><img src="/./../images/image-20241026172517039.png" alt="image-20241026172517039"></p>
+<p><img src="/./../images/image-20241026172602181.png" alt="image-20241026172602181"></p>
+<p><img src="/./../images/image-20241026172658076.png" alt="image-20241026172658076"></p>
+<p>在获取tls值之前都会先call一个函数，通过对每个函数的分析，</p>
+<p>sub_402EB8获取文件的句柄，</p>
+<p>sub_402D28用于处理和检查文件的大小，</p>
+<p>sub_402CBC获取指定文件的文件指针。</p>
+<p>通过这些操作，可以读取病毒所需要的特定的文件并读取其中的内容。</p>
+<p>接下来，进入了一个循环，通过函数sub_403D34和sub_403ED4将病毒信息写入内存，</p>
+<p><img src="/./../images/image-20241026174908370.png" alt="image-20241026174908370"></p>
+<p><strong>sub_403D34:</strong></p>
+<p><img src="/./../images/image-20241027143947849.png" alt="image-20241027143947849"></p>
+<p>可以看到这个函数主要通过sub_402650进行写入操作，</p>
+<p><img src="/./../images/image-20241027144254149.png" alt="image-20241027144254149"></p>
+<p><code>jz short loc_40268D</code>：如果目标地址和源地址相等，则跳转到<code>loc_40268D</code>，不执行任何操作。</p>
+<p><code>sar ecx, 2</code>：将<code>ecx</code>右移2位，计算出可以使用<code>movsd</code>指令复制的双字数量（每次4字节）。</p>
+<p><code>js short loc_40268D</code>：如果右移后的结果是负数，跳转到<code>loc_40268D</code>。</p>
+<p><code>rep movsd</code>：使用<code>rep movsd</code>指令循环地将双字从源地址复制到目标地址。</p>
+<p>此函数通过支持对齐的复制和处理剩余的字节，将数据从一个内存位置复制到另一个内存位置。</p>
+<p><img src="/./../images/image-20241027144935027.png" alt="image-20241027144935027"></p>
+<p>经过一点点调试查看寄存器数据和堆栈数据的变化，分别写入了“xboy”、“whboy”以及未解密的“++戊+缓叛<em>聋+??删”蚊</em> 苜+兆++”等数据。</p>
+<p>同理函数sub_403ED4也是写入函数，</p>
+<p><img src="/./../images/image-20241027150502111.png" alt="image-20241027150502111"></p>
+<p>这两个函数区别不大，主要在于sub_403ED4是对处理的数据进行复制，比如前面提到的加解密之类的数据，而sub_402650主要是负责实际的数据复制。</p>
+
+    </div>
+
+</div>
+                <div class="footer">
+    <span>Copyright © 2022 J47erry&#39;S BLOG</span>
+    <span>Theme Designed By <a target="_blank" href="https://zheli.design/one-paper">這Li</a></span>
+</div>
+
+
+<link rel="stylesheet" href="/css/a11y-dark.min.css">
+
+
+<script src="/js/highlight.min.js"></script>
+
+
+<script src="/js/highlightjs-line-numbers.js"></script>
+
+
+<script>
+    hljs.initHighlightingOnLoad();
+    hljs.initLineNumbersOnLoad();
+</script>
+
+            </div>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
+    <link rel="alternate icon" type="image/png" href="/img/favicon.png">
+    <title>J47erry&#39;S BLOG | 杰歪</title>
+    
+<link rel="stylesheet" href="/css/reset.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<link rel="stylesheet" href="/css/markdown.css">
+
+    
+<link rel="stylesheet" href="/css/fonts.css">
+
+<meta name="generator" content="Hexo 6.2.0"></head>
+    <body>
+        <div class="paper">
+            <div class="paper-main">
+                
+                    <div class="post-header">
+    <a class="logo" href="/">J47erry&#39;S BLOG</a>
+    <a class="go-home" href="/">
+        <svg width="8" height="14" viewBox="0 0 8 14">
+            <path d="M7 1L1 7l6 6" stroke="#000" stroke-width="2" fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </a>
+</div>
+                
+                <div class="post-main">
+
+    
+        <div class="post-main-title">
+            #Dll劫持初体验
+        </div>
+        <div class="post-meta">
+            2022-12-10
+        </div>
+    
+
+    <div class="post-md">
+        <h3 id="Dll劫持初体验"><a href="#Dll劫持初体验" class="headerlink" title="Dll劫持初体验"></a>Dll劫持初体验</h3><p>DLL：动态链接库。DLL 是一个包含可由多个程序同时使用的代码和数据的库。例如，在 Windows 操作系统中，Comdlg32 DLL 执行与对话框有关的常见函数。因此，每个程序都可以使用该 DLL 中包含的功能来实现“打开”对话框。这有助于促进代码重用和内存的有效使用。dll文件和exe文件一样都是PE文件。</p>
+<h4 id="为什么可以dll劫持"><a href="#为什么可以dll劫持" class="headerlink" title="为什么可以dll劫持"></a>为什么可以dll劫持</h4><p>主要是因为Windows的资源共享机制。为了尽可能多得安排资源共享，微软建议多个应用程序共享的任何模块应该放在Windows的系统目录中，如kernel32.dll，这样能够方便找到。但是随着时间的推移，安装程序会用旧文件或者未向后兼容的新文件来替换系统目录下的文件，这样会使一些其他的应用程序无法正确执行，因此，微软改变了策略，建议应用程序将所有文件放到自己的目录中去，而不要去碰系统目录下的任何东西。</p>
+<p>为了提供这样的功能，在Window2000开始，微软加了一个特性，强制操作系统的加载程序首先从应用程序目录中加载模块，只有当加载程序无法在应用程序目录中找到文件，才搜索其他目录。利用系统的这个特性，就可以使应用程序强制加载我们指定的DLL做一些特殊的工作。</p>
+<h4 id="什么是dll劫持"><a href="#什么是dll劫持" class="headerlink" title="什么是dll劫持"></a>什么是dll劫持</h4><p>如果在进程尝试加载一个DLL时没有指定DLL的绝对路径，那么Windows会尝试去指定的目录下查找这个DLL；如果攻击者能够控制其中的某一个目录，并且放一个恶意的DLL文件到这个目录下，这个恶意的DLL便会被进程所加载，进而持久化控制。</p>
+<p>由于 输入表中只包含DLL名而没有它的路径名，因此加载程序必须在磁盘上搜索 DLL文件。首先会尝试从当前程序所在的目录加载DLL，如果没找到，则在 Windows系统目录中查找，最后是在 环境变量中列出的各个目录下查找。利用这个特点，先伪造一个系统同名的DLL，提供同样的 输出表，每个输出函数转向真正的系统DLL。程序调用系统DLL时会先调用当前目录下伪造的DLL，完成相关功能后，再跳到系统DLL同名函数里执行。这个过程用个形象的词来描述就是系统DLL被劫持。</p>
+<pre><code>1.进程装载DLL。
+2.进程卸载DLL。
+3.DLL在被装载之后创建新线程。
+4.DLL在被装载之后线程被终止。
+</code></pre>
+<h5 id="dll文件的加载顺序"><a href="#dll文件的加载顺序" class="headerlink" title="dll文件的加载顺序"></a>dll文件的加载顺序</h5><p>一、Windows XP SP2之前 Windows查找DLL的目录以及对应的顺序：</p>
+<pre><code>1. 进程对应的应用程序所在目录；
+2. 当前目录（Current Directory）；
+3. 系统目录（通过 GetSystemDirectory 获取）；
+4. 16位系统目录；
+5. Windows目录（通过 GetWindowsDirectory 获取）；
+6. PATH环境变量中的各个目录；
+</code></pre>
+<p>例如：对于文件系统,如doc文档打开会被应用程序office打开，而office运行的时候会加载系统的一个dll文件，如果我们将用恶意的dll来替换系统的dll文件，就是将DLL和doc文档放在一起，运行的时候就会在当前目录中找到DLL，从而优先系统目录下的DLL而被执行。</p>
+<p>二、在Windows xp sp2之后</p>
+<p>Windows查找DLL的目录以及对应的顺序（SafeDllSearchMode 默认会被开启）：</p>
+<p>默认注册表为：</p>
+<pre><code>HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\SafeDllSearchMode， //其键值为1
+</code></pre>
+<p>dll文件加载顺序：</p>
+<pre><code>1. 进程对应的应用程序所在目录（可理解为程序安装目录比如C:ProgramFilesuTorrent）；
+2. 系统目录（即%windir%system32）；
+3. 16位系统目录（即%windir%system）；
+4. Windows目录（即%windir%）；
+5. 当前目录（运行的某个文件所在目录，比如C:DocumentsandSettingsAdministratorDesktoptest）；
+6. PATH环境变量中的各个目录；
+</code></pre>
+<p>三、Windows7以上</p>
+<p>系统没有了SafeDllSearchMode 而采用KnownDLLs，那么凡是此项下的DLL文件就会被禁止从EXE自身所在的目录下调用，而只能从系统目录即SYSTEM32目录下调用，其注册表位置：</p>
+<pre><code>计算机\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SessionManager\KnownDLLs
+</code></pre>
+<p>根据dll文件的路径，去注册表里面找。</p>
+<p>但是不管是哪种情况，第一个搜索的肯定是应用程序的所在目录，这样就有机会让应用程序去加载我们的DLL。如果这个DLL和系统目录下的某个DLL同名，导出表也相同，功能就是加载系统目录下的那个DLL，并且将导出表转发到那个真实的DLL。这时DLL劫持就发生了。可以看出，构造一个符合上面要求的DLL，再将其放在可执行文件的目录即可轻松实现DLL劫持了。</p>
+<h5 id="dll劫持产生条件"><a href="#dll劫持产生条件" class="headerlink" title="dll劫持产生条件"></a>dll劫持产生条件</h5><pre><code>1.dll能否被劫持：
+  不在&#39;HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\KnownDLLs&#39;注册表中
+2.其dll是EXE程序首先加载的DLL，而不是依赖其他DLL加载的。
+3.DLL确实被加载进内存中
+</code></pre>
+<h4 id="判断dll是否可以被劫持的判断方法"><a href="#判断dll是否可以被劫持的判断方法" class="headerlink" title="判断dll是否可以被劫持的判断方法"></a>判断dll是否可以被劫持的判断方法</h4><p>查看dll是否存在于“KnownDlls”中</p>
+<h5 id="手动方法"><a href="#手动方法" class="headerlink" title="手动方法"></a>手动方法</h5><p>把程序单独放到一个文件夹中，这种报错的话，就emm</p>
+<p><img src="/./../images/image-20210827152057081.png" alt="image-20210827152057081"></p>
+<p><img src="/./../images/image-20210825112743456.png" alt="image-20210825112743456"></p>
+<h6 id="ProcessExplorer"><a href="#ProcessExplorer" class="headerlink" title="ProcessExplorer"></a>ProcessExplorer</h6><p>给出官方下载地址</p>
+<pre><code>https://docs.microsoft.com/zh-cn/sysinternals/downloads/process-explorer
+</code></pre>
+<p><img src="/./../images/image-20210824181448899.png" alt="image-20210824181448899"></p>
+<h6 id="ProcessMonitor"><a href="#ProcessMonitor" class="headerlink" title="ProcessMonitor"></a>ProcessMonitor</h6><pre><code>下载地址：https://docs.microsoft.com/zh-cn/sysinternals/downloads/procmon
+</code></pre>
+<p><img src="/./../images/image-20210824182536576.png" alt="image-20210824182536576"></p>
+<p><img src="/./../images/image-20210824182600639.png" alt="image-20210824182600639"></p>
+<h6 id="火绒剑"><a href="#火绒剑" class="headerlink" title="火绒剑"></a>火绒剑</h6><p><img src="/./../images/image-20210824183043282.png" alt="image-20210824183043282"></p>
+<p>到这里来对比</p>
+<p><img src="/./../images/image-20210824183603094.png" alt="image-20210824183603094"></p>
+<h4 id="自动化工具"><a href="#自动化工具" class="headerlink" title="自动化工具"></a>自动化工具</h4><h6 id="1-Ratter"><a href="#1-Ratter" class="headerlink" title="1.Ratter"></a>1.Ratter</h6><pre><code>下载地址:https://github.com/sensepost/rattler/releases
+</code></pre>
+<p>应该是我加载文件的原因，没找到一个可以利用dll劫持的，现在的防护也做得比较好</p>
+<p><img src="/./../images/image-20210824183840069.png" alt="image-20210824183840069"></p>
+<h6 id="2-DLL-Hijack-Auditor"><a href="#2-DLL-Hijack-Auditor" class="headerlink" title="2.DLL Hijack Auditor"></a>2.DLL Hijack Auditor</h6><p>自行百度下载</p>
+<p><img src="/./../images/image-20210824185509618.png" alt="image-20210824185509618"></p>
+<h6 id="3-ChkDllHijack"><a href="#3-ChkDllHijack" class="headerlink" title="3.ChkDllHijack"></a>3.ChkDllHijack</h6><pre><code>下载链接：https://github.com/anhkgg/anhkgg-tools
+</code></pre>
+<p>待验证的dll列表可以用前面提到的微软自带的工具导出到txt文档，直接复制就可以。</p>
+<p><img src="/./../images/image-20210824212227637.png" alt="image-20210824212227637"></p>
+<p><img src="/./../images/image-20210824212923879.png" alt="image-20210824212923879"></p>
+<h4 id="实现dll劫持"><a href="#实现dll劫持" class="headerlink" title="实现dll劫持"></a>实现dll劫持</h4><p>这里在我的虚拟机中测试</p>
+<p>我比较菜，现在还不会动手写dll文件，这里就使用工具来生成dll文件。</p>
+<p>首先明确我们的需求：</p>
+<pre><code>1、构造一个与系统目录下LPK.DLL一样的导出表
+2、加载系统目录下的LPK.DLL
+3、将导出函数转发到系统目录下的LPK.DLL上
+4、在初始化函数中加入我们要执行的代码
+</code></pre>
+<p>这里使用t00ls的lpk提权辅助</p>
+<p>设置触发dll劫持的热键。</p>
+<p><img src="/./../images/image-20210824221349524.png" alt="image-20210824221349524"></p>
+<p>放到exe程序的相同目录里，只要对方重启该exe程序，dll文件就会被触发，我这里放到了phpstudy目录里。</p>
+<p><img src="/./../images/image-20210824221526476.png" alt="image-20210824221526476"></p>
+<p>如果没有第三方软件的话，也可以放到IIS  mysql数据库里。</p>
+<p><img src="/./../images/image-20210824221640569.png" alt="image-20210824221640569"></p>
+<p>远程连接输入热键和密码，成功实现劫持。</p>
+<p><img src="/./../images/image-20210824221658645.png" alt="image-20210824221658645"></p>
+<p>开始漫游</p>
+<p><img src="/./../images/image-20210824221749933.png" alt="image-20210824221749933"></p>
+<p>看下当前权限，system</p>
+<p><img src="/./../images/image-20210824221824565.png" alt="image-20210824221824565"></p>
+<p>这里我只是实现了第三方软件的dll劫持，还可以劫持系统的dll，手法多种多样，下面介绍几种其他的方式生成dll文件。</p>
+<h6 id="1-msf生成"><a href="#1-msf生成" class="headerlink" title="1.msf生成"></a>1.msf生成</h6><pre><code>msfvenom -p windows/exec CMD = notepad.exe EXITFUNC=thread -f dll -o notepad.dll
+</code></pre>
+<p>这种方法显而易见，不免杀，而且免杀很难做。</p>
+<h6 id="2-InjectProc注入"><a href="#2-InjectProc注入" class="headerlink" title="2.InjectProc注入"></a>2.InjectProc注入</h6><pre><code> 下载地址：https://github.com/secrary/InjectProc/releases/tag/0.1
+</code></pre>
+<p>这个工具利用的是进程注入，链接中也有演示视频，这里就不演示了。</p>
+<h6 id="3-CS-注入工具"><a href="#3-CS-注入工具" class="headerlink" title="3.CS + 注入工具"></a>3.CS + 注入工具</h6><p>先生成一段shellcode，再利用工具注入</p>
+<p><img src="/./../images/image-20210824222615284.png" alt="image-20210824222615284"></p>
+<p>ring3层的dll注入</p>
+<p><img src="/./../images/image-20210824222825384.png" alt="image-20210824222825384"></p>
+<p>这个</p>
+<p><img src="/./../images/image-20210825115627052.png" alt="image-20210825115627052"></p>
+<p>会在当前目录下生成conf.inf 和 wwwcomw.dll 两个文件，体积也不太大。</p>
+<p><img src="/./../images/image-20210824222958239.png" alt="image-20210824222958239"></p>
+<p>然后需要将dll文件放到和准备劫持的exe同一目录中。这里我都放到了桌面。</p>
+<p><img src="/./../images/image-20210824225307315.png" alt="image-20210824225307315"></p>
+<p>首先将shellcode生成的dll函数导入到exe pe表中</p>
+<p>将准备劫持的文件放到pe查看器中</p>
+<p><img src="/./../images/image-20210824224705341.png" alt="image-20210824224705341"></p>
+<p>在函数那里导入刚才生成的dll函数</p>
+<p><img src="/./../images/image-20210824224850213.png" alt="image-20210824224850213"></p>
+<p><img src="/./../images/image-20210824225139414.png" alt="image-20210824225139414"></p>
+<p>但是我这里确始终不上线，不知道是系统原因还是劫持文件的原因，换了好几个exe文件都不得行。有知道的师傅可以告诉我一下。</p>
+<h6 id="4-利用NSIS默认向导脚本制作Windows安装包"><a href="#4-利用NSIS默认向导脚本制作Windows安装包" class="headerlink" title="4.利用NSIS默认向导脚本制作Windows安装包"></a>4.利用NSIS默认向导脚本制作Windows安装包</h6><pre><code> 下载地址：https://nsis.sourceforge.io/Download
+</code></pre>
+<p>NSIS只是一个打包安装包的软件，想要打包后上线的前提是第三步中的exe已经被注入可以上线。</p>
+<p>准备一个exe文件（这里应该是第三步中注入好的exe文件，因为我第三步中选的exe没有图标，所以这里换一个exe）</p>
+<p><img src="/./../images/image-20210824231519652.png" alt="image-20210824231519652"></p>
+<p>利用资源树提取ico图标</p>
+<p><img src="/./../images/image-20210824232531410.png" alt="image-20210824232531410"></p>
+<p>准备打包</p>
+<p>选择编译脚本</p>
+<p><img src="/./../images/image-20210824232116074.png" alt="image-20210824232116074"></p>
+<p>开始安装</p>
+<p><img src="/./../images/image-20210824232157170.png" alt="image-20210824232157170"></p>
+<p><img src="/./../images/image-20210824232819179.png" alt="image-20210824232819179"></p>
+<p><img src="/./../images/image-20210824233001057.png" alt="image-20210824233001057"></p>
+<p>应用程序默认安装目录最好，为了防止和原来安装的冲突，应用名后面加个1</p>
+<p>还有下面的授权文件，路径必须存在 ，不然后面编译时会报错。(呜呜呜  这里浪费了太多时间)</p>
+<p><img src="/./../images/image-20210824233058500.png" alt="image-20210824233058500"></p>
+<p>第五步先把默认的两个项目删掉，然后新建项目</p>
+<p><img src="/./../images/image-20210825121454652.png" alt="image-20210825121454652"></p>
+<p><img src="/./../images/image-20210825121539770.png" alt="image-20210825121539770"></p>
+<p><img src="/./../images/image-20210824233444394.png" alt="image-20210824233444394"></p>
+<p><img src="/./../images/image-20210824233546370.png" alt="image-20210824233546370"></p>
+<p><img src="/./../images/image-20210824233611594.png" alt="image-20210824233611594"></p>
+<p>emmm 干得漂亮</p>
+<p>换个安装包试试</p>
+<p><img src="/./../images/image-20210824233807228.png" alt="image-20210824233807228"></p>
+<p>换了个爱奇艺，成功编译</p>
+<p><img src="/./../images/image-20210825124823438.png" alt="image-20210825124823438"></p>
+<p><img src="/./../images/image-20210825124945535.png" alt="image-20210825124945535"></p>
+<p><img src="/./../images/image-20210825125118358.png" alt="image-20210825125118358"></p>
+<p><img src="/./../images/image-20210825124852589.png" alt="image-20210825124852589"></p>
+<p>对比一下可以看到 体积只增加了一点点  少了数字签名  一般人的话应该不会不会注意到，这个时候配合注入dll 可以成功实现留后门。</p>
+<h4 id="总结："><a href="#总结：" class="headerlink" title="总结："></a>总结：</h4><p>dll可以利用的点很多，思路很多很广，可以劫持，注入，提权，白加黑、自己编写dll加载shellcode等等。</p>
+<p>有哪里不对的大佬们可以指出来</p>
+<p>参考链接：</p>
+<pre><code>https://www.cnblogs.com/bmjoker/p/11031238.html
+https://blog.csdn.net/gamma_lab/article/details/119451934
+https://zhuanlan.zhihu.com/p/339329861
+</code></pre>
+
+    </div>
+
+</div>
+                <div class="footer">
+    <span>Copyright © 2022 J47erry&#39;S BLOG</span>
+    <span>Theme Designed By <a target="_blank" href="https://zheli.design/one-paper">這Li</a></span>
+</div>
+
+
+<link rel="stylesheet" href="/css/a11y-dark.min.css">
+
+
+<script src="/js/highlight.min.js"></script>
+
+
+<script src="/js/highlightjs-line-numbers.js"></script>
+
+
+<script>
+    hljs.initHighlightingOnLoad();
+    hljs.initLineNumbersOnLoad();
+</script>
+
+            </div>
+        </div>
+    </body>
+</html>

