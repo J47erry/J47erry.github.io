@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
+    <link rel="alternate icon" type="image/png" href="/img/favicon.png">
+    <title>J47erry&#39;S BLOG | 杰歪</title>
+    
+<link rel="stylesheet" href="/css/reset.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<link rel="stylesheet" href="/css/markdown.css">
+
+    
+<link rel="stylesheet" href="/css/fonts.css">
+
+<meta name="generator" content="Hexo 6.2.0"></head>
+    <body>
+        <div class="paper">
+            <div class="paper-main">
+                
+                    <div class="post-header">
+    <a class="logo" href="/">J47erry&#39;S BLOG</a>
+    <a class="go-home" href="/">
+        <svg width="8" height="14" viewBox="0 0 8 14">
+            <path d="M7 1L1 7l6 6" stroke="#000" stroke-width="2" fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </a>
+</div>
+                
+                <div class="post-main">
+
+    
+        <div class="post-main-title">
+            #CS 分离免杀上线
+        </div>
+        <div class="post-meta">
+            2022-10-07
+        </div>
+    
+
+    <div class="post-md">
+        <hr>
+<h1 id="CS-分离免杀上线"><a href="#CS-分离免杀上线" class="headerlink" title="CS 分离免杀上线"></a>CS 分离免杀上线</h1><p>首先cs上生成raw格式的木马，然后使用加载器加载</p>
+<pre><code>下载地址：https://github.com/knownsec/shellcodeloader
+</code></pre>
+<p><img src="/./../images/image-20210827121258197.png" alt="image-20210827121258197"></p>
+<p>火绒正常过，但是被360杀了</p>
+<p><img src="/./../images/image-20210827121313495.png" alt="image-20210827121313495"></p>
+<p><img src="/./../images/image-20210827121200670.png" alt="image-20210827121200670"></p>
+<p>上线后的权限直接是system</p>
+<p><img src="/./../images/image-20210827121438469.png" alt="image-20210827121438469"></p>
+<p>下面尝试下加壳</p>
+<pre><code>下载地址：http://www.pc6.com/softview/SoftView_18439.html?_t_t_t=0.4545903904363513
+</code></pre>
+<p>加壳后体积小了一点</p>
+<p><img src="/./../images/image-20210827123119911.png" alt="image-20210827123119911"></p>
+<p><img src="/./../images/image-20210827123152620.png" alt="image-20210827123152620"></p>
+<p>再尝试添加下数字签名</p>
+<pre><code>工具下载地址：https://github.com/3gstudent/signtools
+</code></pre>
+<p>1.检查程序中是否有证书</p>
+<p>管理员权限运行cmd</p>
+<pre><code class="cc">sigcheck.exe -q C:\Users\0range\Desktop\loader.exe
+</code></pre>
+<p><img src="/./../images/image-20210827123732108.png" alt="image-20210827123732108"></p>
+<p>2.使用makecert命令制作证书，sv-私钥文件名，ss-主题的证书存储名称，n-证书颁发对象，r-证书存储位置，输入私钥密码。</p>
+<pre><code>makecert.exe -n &quot;CN=Microsoft Windows&quot; -r -sv system.pvk system.cer
+Cert2Spc.exe system.cer system.spc
+pvk2pfx.exe -pvk system.pvk -pi 123456 -spc system.spc -pfx system.pfx -f
+</code></pre>
+<p><img src="/./../images/image-20210827124017578.png" alt="image-20210827124017578"></p>
+<p>3.注册证书与签发证书</p>
+<pre><code>CertMgr.Exe -add -c system.cer -s -r localmachine r
+signtool.exe sign /f system.pfx /p 123456   C:\Users\0range\Desktop\loader.exe 
+</code></pre>
+<p><img src="/./../images/image-20210827124413983.png" alt="image-20210827124413983"></p>
+<p><img src="/./../images/image-20210827124644428.png" alt="image-20210827124644428"></p>
+<p>这里还是没有骗过360，只过掉了静态扫描</p>
+<p><img src="/./../images/image-20210827125021156.png" alt="image-20210827125021156"></p>
+<p><img src="/./../images/image-20210827124754787.png" alt="image-20210827124754787"></p>
+<p>给powershell脚本上签名</p>
+<p>生成证书文件</p>
+<pre><code>makecert -n &quot;CN=Microsoft Windows&quot; -r -eku 1.3.6.1.5.5.7.3.3 -sv certtest.pvk certtest.cer
+cert2spc certtest.cer certtest.spc
+pvk2pfx -pvk certtest.pvk -pi 123456 -spc certtest.spc -pfx certtest.pfx -f
+</code></pre>
+<p>给脚本签名</p>
+<pre><code>powershell
+$cert = Get-PfxCertificate certtest.pfx
+Set-AuthenticodeSignature -Filepath C:\Users\0range\Desktop\payload.ps1 -Cert $cert
+</code></pre>
+<p><img src="/./../images/image-20210827130322716.png" alt="image-20210827130322716"></p>
+<p>这火绒都杀。。。</p>
+<p><img src="/./../images/image-20210827130229931.png" alt="image-20210827130229931"></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>毕竟工具放出来这么长时间了，而且不需要什么技术含量，纯粹傻瓜式操作，免杀效果可见一斑，但不妨稍加改造，自己造轮子（太菜了，我不会。。。），效果应该会更好。</p>
+<pre><code>参考链接：
+
+https://www.cnblogs.com/LyShark/p/11347609.html
+</code></pre>
+
+    </div>
+
+</div>
+                <div class="footer">
+    <span>Copyright © 2022 J47erry&#39;S BLOG</span>
+    <span>Theme Designed By <a target="_blank" href="https://zheli.design/one-paper">這Li</a></span>
+</div>
+
+
+<link rel="stylesheet" href="/css/a11y-dark.min.css">
+
+
+<script src="/js/highlight.min.js"></script>
+
+
+<script src="/js/highlightjs-line-numbers.js"></script>
+
+
+<script>
+    hljs.initHighlightingOnLoad();
+    hljs.initLineNumbersOnLoad();
+</script>
+
+            </div>
+        </div>
+    </body>
+</html>
