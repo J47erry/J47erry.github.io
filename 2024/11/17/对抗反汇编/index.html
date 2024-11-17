@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
+    <link rel="alternate icon" type="image/png" href="/img/favicon.png">
+    <title>J47erry&#39;S BLOG | 杰歪</title>
+    
+<link rel="stylesheet" href="/css/reset.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<link rel="stylesheet" href="/css/markdown.css">
+
+    
+<link rel="stylesheet" href="/css/fonts.css">
+
+<meta name="generator" content="Hexo 6.2.0"></head>
+    <body>
+        <div class="paper">
+            <div class="paper-main">
+                
+                    <div class="post-header">
+    <a class="logo" href="/">J47erry&#39;S BLOG</a>
+    <a class="go-home" href="/">
+        <svg width="8" height="14" viewBox="0 0 8 14">
+            <path d="M7 1L1 7l6 6" stroke="#000" stroke-width="2" fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </a>
+</div>
+                
+                <div class="post-main">
+
+    
+        <div class="post-main-title">
+            
+        </div>
+        <div class="post-meta">
+            2024-11-17
+        </div>
+    
+
+    <div class="post-md">
+        <h2 id="反汇编算法"><a href="#反汇编算法" class="headerlink" title="反汇编算法"></a>反汇编算法</h2><ul>
+<li><strong>线性反汇编</strong></li>
+</ul>
+<p>具体原理：从一个代码段的第一个字节开始，以线性模式扫描整个代码段，逐条反汇编每条指令，直到完成整个代码段。</p>
+<p>优点：能够完全覆盖程序的所有代码段。</p>
+<p>缺点：没有考虑到代码中可能混有数据。</p>
+<p>主要工具：GDB</p>
+<ul>
+<li><strong>面向代码流的反汇编</strong>，也被称做递归下降反汇编算法</li>
+</ul>
+<p>具体原理：递归下降算法强调控制流的概念。控制流根据一条指令是否被另一条指令引用来决定是否对其进行反汇编。</p>
+<p>优点：具有区分代码与数据的强大能力。</p>
+<p>缺点：无法处理间接代码路径。</p>
+<p>主要工具：IDA、windbg</p>
+<h2 id="对抗反汇编技术"><a href="#对抗反汇编技术" class="headerlink" title="对抗反汇编技术"></a>对抗反汇编技术</h2><ul>
+<li><strong>相同目标的跳转指令</strong></li>
+</ul>
+<p><img src="/D:/hexo/J47erry/source/images/image-20241023110731311.png" alt="image-20241023110731311"></p>
+<p><img src="/D:/hexo/J47erry/source/images/image-20241023110805062.png" alt="image-20241023110805062"></p>
+<p><img src="/D:/hexo/J47erry/source/images/image-20241023110833815.png" alt="image-20241023110833815"></p>
+<ul>
+<li><strong>固定条件的跳转指令</strong></li>
+</ul>
+<p><img src="/D:/hexo/J47erry/source/images/image-20241022155853442.png" alt="image-20241022155853442"></p>
+<p><img src="/D:/hexo/J47erry/source/images/image-20241022160008646.png" alt="image-20241022160008646"></p>
+<p><img src="/D:/hexo/J47erry/source/images/image-20241022160043130.png" alt="image-20241022160043130"></p>
+<p><img src="/D:/hexo/J47erry/source/images/image-20241022164140336.png" alt="image-20241022164140336"></p>
+<ul>
+<li><strong>无效的反汇编指令：添加NOP指令</strong></li>
+</ul>
+<p><img src="/D:/hexo/J47erry/source/images/image-20241023111209381.png" alt="image-20241023111209381"></p>
+<p><img src="/D:/hexo/J47erry/source/images/image-20241023111232580.png" alt="image-20241023111232580"></p>
+<p><img src="/D:/hexo/J47erry/source/images/image-20241023111258486.png" alt="image-20241023111258486"></p>
+<p><img src="/D:/hexo/J47erry/source/images/image-20241023111936439.png" alt="image-20241023111936439"></p>
+<ul>
+<li><strong>混淆控制流图：</strong></li>
+</ul>
+<p><strong>函数指针：添加代码的交叉引用</strong></p>
+<pre><code>mov [ebp+var_4], offset sub_4011c0;
+push 2Ah;
+call [ebp+var_4];
+</code></pre>
+<p>​		<strong>原理：</strong>如果在汇编语言中可以使用函数指针或者在源码中构造不标准的函数指针格式，会导致在没有动态分析的前提下很难进行逆向分析。</p>
+<p>​		<strong>解决方案：</strong>在IDA中添加代码的交叉引用，使用IDC中名为AddCodeXref函数，有三个参数：<u>交叉引用来源的位置、交叉引用指向的位置、以及流的类型。</u><br>$$<br>AddCodeXref(0x004011DE,0x004011C0,fl-CF)<br>$$<br><code>fl_cf</code> 是 IDA Pro 中表示<strong>控制流</strong>（control flow）的标志之一。</p>
+<p><strong>滥用指针返回：alt+p调整函数边界，然后使用nop指令替换</strong></p>
+<pre><code>        var_4    =byte ptr -4;
+4011c0	call $+5;//将4011c5压入栈中
+4011c5	add [esp+4+var_4],5;//将栈转化为4011CA
+4011c9	retn;//调用4011CA函数
+
+4011ca push ebp;
+...
+...
+</code></pre>
+<p>​		<strong>原理：</strong>retn指令首先从栈顶弹出一个值，然后跳转到这个值所表示的地址处。（将retn放在函数中间位置来获取栈顶的值，会导致反汇编器不能显示交叉引用目标，以及提前结束这个函数，相当于填充了垃圾字符）</p>
+<p>​		<strong>解决方案：</strong>将retn指令前面的垃圾字符用NOP指令进行替换，然后使用alt+p的快捷键将函数的边界调整到真实的函数，可以恢复控制流。</p>
+<p>​		</p>
+<p><strong>滥用结构化异常处理（SEH）：c键转换代码</strong></p>
+<pre><code>mov eax, (offset loc_40106B+1);
+add eax, 14h;
+//这两句汇编代码就是实现异常处理函数的构建，实际异常处理函数为loc_401080
+push eax;//函数压入栈中
+push  large dword ptr fs:0;
+mov large fs:0, esp;
+//成功加入SEH异常处理函数
+xor ecx, rcx;
+div ecx;
+//构建除0错误
+</code></pre>
+<p>​		<strong>原理：</strong>结构化异常处理(SEH)是用于处理异常的一个函数列表，倘若遇上异常，会按照次序依次调用SEH当中的函数进行处理。当最后一个函数也无法处理的时候会弹出对话框进行报错，滥用结构化异常处理是指在SEH链当中加入自己定义的异常处理函数来实现控制流混淆。</p>
+<p>​		<strong>解决方案：</strong>用C键将没有调用的子例程转换成代码进行分析。</p>
+<p>攻击手法：利用SEH实现变相控制程序流</p>
+<ul>
+<li><strong>挫败栈帧分析</strong></li>
+</ul>
+<p>​		<strong>原理：</strong>反汇编器能够通过分析一个函数中的指令推导出函数栈的结构，能够显示局部变量以及和函数相关的参数。但是，可能出现栈指针显示为一个负数，这意味着这个函数破坏了调用函数的栈帧。</p>
+<p>​		<strong>解决方案：</strong>通过alt+k组合键，输入调整的栈指针值，进行修补栈帧操作指令。</p>
+
+    </div>
+
+</div>
+                <div class="footer">
+    <span>Copyright © 2022 J47erry&#39;S BLOG</span>
+    <span>Theme Designed By <a target="_blank" href="https://zheli.design/one-paper">這Li</a></span>
+</div>
+
+
+<link rel="stylesheet" href="/css/a11y-dark.min.css">
+
+
+<script src="/js/highlight.min.js"></script>
+
+
+<script src="/js/highlightjs-line-numbers.js"></script>
+
+
+<script>
+    hljs.initHighlightingOnLoad();
+    hljs.initLineNumbersOnLoad();
+</script>
+
+            </div>
+        </div>
+    </body>
+</html>

