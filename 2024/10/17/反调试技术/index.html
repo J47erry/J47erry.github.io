@@ -349,7 +349,7 @@ ntdll!_PEB
 &#125; 
 </code></pre>
 <p><strong>查找进程信息</strong></p>
-<p><img src="/D:/hexo/J47erry/source/images/image-20241029160057623.png" alt="image-20241029160057623"></p>
+<p><img src="/images/image-20241029160057623.png" alt="image-20241029160057623"></p>
 <pre><code class="c++">BOOL CheckDebug()  
 &#123;  
     DWORD ID;  
@@ -478,8 +478,8 @@ BOOL CheckDebug()
 <li><strong>判断父进程是否是explorer.exe</strong></li>
 </ul>
 <p>一般双击运行的进程的父进程都是explorer.exe，但是如果进程被调试父进程则是调试器进程。也就是说如果父进程不是explorer.exe则可以认为程序正在被调试。</p>
-<p><img src="/D:/hexo/J47erry/source/images/image-20241029162224290.png" alt="image-20241029162224290"></p>
-<p><img src="/D:/hexo/J47erry/source/images/image-20241029162316374.png" alt="image-20241029162316374"></p>
+<p><img src="/images/image-20241029162224290.png" alt="image-20241029162224290"></p>
+<p><img src="/images/image-20241029162316374.png" alt="image-20241029162316374"></p>
 <ul>
 <li><strong>判断startupinfo信息</strong></li>
 </ul>
@@ -506,8 +506,8 @@ BOOL CheckDebug()
 <li><strong>使用TLS回调</strong></li>
 </ul>
 <p> TLS 回调函数会在每个线程创建或终止时自动执行.</p>
-<p><img src="/D:/hexo/J47erry/source/images/image-20241029172038912.png" alt="image-20241029172038912"></p>
-<p>在IDA Pro中按Ctrl+E快捷键看到二进制的入口点，该组合键的作用是显示应用程序所有的入口点，其中包括TLS回调。双击函数名可以浏览回调函数。</p>
+<p>基本原理：TLS回调函数在每个线程创建时会被操作系统自动调用，通常在主函数执行之前，因此，调试器在调试时通常不会直接关注这些回调函数。</p>
+<p>解决方法：在IDA Pro中按Ctrl+E快捷键看到二进制的入口点，该组合键的作用是显示应用程序所有的入口点，其中包括TLS回调。双击函数名可以浏览回调函数。</p>
 <ul>
 <li><strong>插入中断</strong></li>
 </ul>
@@ -614,14 +614,13 @@ BOOL CheckDebug()
 <li><strong>PE头漏洞</strong></li>
 </ul>
 <ol>
-<li>PE文件的头部<code>IMAGE_OPTIONAL_HEADER</code>的结构：DataDirectory数组的大小被设置为IMAGE_NUMBEROF_DIRECTORY_ENTRIES，它等于0x10。因为DataDirectory数组不足以容纳超过0x10个目录项，所以当NumberOfRvaAndSizes大于0x10时，Windows加载器将会忽略NumberOfRvaAndSizes。OllyDbg遵循了这个标准，并且无论NumberOfRvaAndSizes是什么值，OllyDbg都使用它。因此，设置NumberOfRvaAndSizes为一个超过0x10的值，会导致在程序退出前，OllyDbg对用户弹出一个窗口。如图所示，使用LordPE打开可执行文件，修改RVA数及大小并保存，再用OllyDbg打开，会提示错误Bad or unknown format of 32-bit executable file。<img src="/D:/hexo/J47erry/source/images/image-20241029164737248.png" alt="image-20241029164737248"></li>
-<li>节头部<code>IMAGE_SECTION_HEADER</code>的结构：Windows加载器使用VirtualSize和SizeOfRawData中的最小值将节数据映射到内存。如果SizeOfRawData大于VirtualSize，则仅将VirtualSize大小的数据复制入内存，忽略其余数据。因为OllyDbg仅使用SizeOfRawData，所以设置SizeOfRawData为一个类似0x77777777的大数值时，会导致OllyDbg崩溃。<img src="/D:/hexo/J47erry/source/images/image-20241029164750846.png" alt="image-20241029164750846"></li>
+<li>PE文件的头部<code>IMAGE_OPTIONAL_HEADER</code>的结构：DataDirectory数组的大小被设置为IMAGE_NUMBEROF_DIRECTORY_ENTRIES，它等于0x10。因为DataDirectory数组不足以容纳超过0x10个目录项，所以当NumberOfRvaAndSizes大于0x10时，Windows加载器将会忽略NumberOfRvaAndSizes。OllyDbg遵循了这个标准，并且无论NumberOfRvaAndSizes是什么值，OllyDbg都使用它。因此，设置NumberOfRvaAndSizes为一个超过0x10的值，会导致在程序退出前，OllyDbg对用户弹出一个窗口。如图所示，使用LordPE打开可执行文件，修改RVA数及大小并保存，再用OllyDbg打开，会提示错误Bad or unknown format of 32-bit executable file。<img src="/images/image-20241029164737248.png" alt="image-20241029164737248"></li>
+<li>节头部<code>IMAGE_SECTION_HEADER</code>的结构：Windows加载器使用VirtualSize和SizeOfRawData中的最小值将节数据映射到内存。如果SizeOfRawData大于VirtualSize，则仅将VirtualSize大小的数据复制入内存，忽略其余数据。因为OllyDbg仅使用SizeOfRawData，所以设置SizeOfRawData为一个类似0x77777777的大数值时，会导致OllyDbg崩溃。<img src="/images/image-20241029164750846.png" alt="image-20241029164750846"></li>
 </ol>
 <ul>
 <li><strong>OutputDebugString漏洞</strong></li>
 </ul>
 <p>恶意代码常尝试利用OllyDbg1.1的格式化字符串漏洞，为OutputDebugString函数提供一个%s字符串的参数，让OllyDbg崩溃。因此，需要注意程序中可疑的OutputDebugString调用，例如OutputDebugString(“%s%s%s%s%s%s%s%s%s”)。如果执行了这个调用，OllyDbg将会崩溃。</p>
-<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/xiao_yi_xiao/article/details/121762629">反调试技术总结(看雪)-CSDN博客</a></p>
 
     </div>
 
