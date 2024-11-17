@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
+    <link rel="alternate icon" type="image/png" href="/img/favicon.png">
+    <title>J47erry&#39;S BLOG | 杰歪</title>
+    
+<link rel="stylesheet" href="/css/reset.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<link rel="stylesheet" href="/css/markdown.css">
+
+    
+<link rel="stylesheet" href="/css/fonts.css">
+
+<meta name="generator" content="Hexo 6.2.0"></head>
+    <body>
+        <div class="paper">
+            <div class="paper-main">
+                
+                    <div class="post-header">
+    <a class="logo" href="/">J47erry&#39;S BLOG</a>
+    <a class="go-home" href="/">
+        <svg width="8" height="14" viewBox="0 0 8 14">
+            <path d="M7 1L1 7l6 6" stroke="#000" stroke-width="2" fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </a>
+</div>
+                
+                <div class="post-main">
+
+    
+        <div class="post-main-title">
+            #从样本分析中学习病毒隐蔽启动过程
+        </div>
+        <div class="post-meta">
+            2024-11-13
+        </div>
+    
+
+    <div class="post-md">
+        <hr>
+<p>本文首发于先知社区，原文链接：<a target="_blank" rel="noopener" href="https://xz.aliyun.com/t/16250">https://xz.aliyun.com/t/16250</a></p>
+<h2 id="进程注入"><a href="#进程注入" class="headerlink" title="进程注入"></a>进程注入</h2><ul>
+<li><h3 id="DLL注入"><a href="#DLL注入" class="headerlink" title="DLL注入"></a><strong>DLL注入</strong></h3></li>
+</ul>
+<p>基本原理：将自定义DLL的路径传递给目标进程，并使目标进程调用 <code>LoadLibrary</code> 函数加载该DLL。</p>
+<p>大致步骤：</p>
+<pre><code>获取远程进程的句柄：使用OpenProcess打开目标进程
+分配内存空间：使用VirtualAllocEx在目标进程中分配内存
+写入DLL路径：使用WriteProcessMemory将DLL路径写入目标进程的内存
+加载DLL：使用CreateRemoteThread创建远程线程，调用LoadLibrary或CreateThread执行代码
+</code></pre>
+<p>代码示例：</p>
+<pre><code class="c">#include &lt;windows.h&gt;
+
+BOOL InjectDLL(DWORD dwProcessId, const char* szDllPath) &#123;
+    HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dwProcessId);
+    if (hProcess == NULL) &#123;
+        return FALSE;
+    &#125;
+
+    LPVOID lpRemoteMemory = VirtualAllocEx(hProcess, NULL, strlen(szDllPath) + 1, MEM_COMMIT, PAGE_READWRITE);
+    if (lpRemoteMemory == NULL) &#123;
+        CloseHandle(hProcess);
+        return FALSE;
+    &#125;
+
+    if (!WriteProcessMemory(hProcess, lpRemoteMemory, szDllPath, strlen(szDllPath) + 1, NULL)) &#123;
+        VirtualFreeEx(hProcess, lpRemoteMemory, 0, MEM_RELEASE);
+        CloseHandle(hProcess);
+        return FALSE;
+    &#125;
+
+    HANDLE hThread = CreateRemoteThread(hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)LoadLibraryA, lpRemoteMemory, 0, NULL);
+    if (hThread == NULL) &#123;
+        VirtualFreeEx(hProcess, lpRemoteMemory, 0, MEM_RELEASE);
+        CloseHandle(hProcess);
+        return FALSE;
+    &#125;
+
+    WaitForSingleObject(hThread, INFINITE);
+    CloseHandle(hThread);
+    VirtualFreeEx(hProcess, lpRemoteMemory, 0, MEM_RELEASE);
+    CloseHandle(hProcess);
+    return TRUE;
+&#125;
+</code></pre>
+<p><code>OpenProcess</code>函数：</p>
+<pre><code class="c++">HANDLE OpenProcess(
+  [in] DWORD dwDesiredAccess,  //对进程对象的访问
+  [in] BOOL  bInheritHandle,  //是否继承进程的HANDLE
+  [in] DWORD dwProcessId  //要打开的本地进程的标志符
+);
+</code></pre>
+<p><code>VirtualAllocxEx</code>函数：</p>
+<pre><code class="c++">LPVOID VirtualAllocEx(
+  [in]           HANDLE hProcess,  //进程的句柄
+  [in, optional] LPVOID lpAddress,  //为要分配的页面区域指定所需起始地址的指针
+  [in]           SIZE_T dwSize,  //要分配的内存区域的大小
+  [in]           DWORD  flAllocationType,  //内存分配的类型
+  [in]           DWORD  flProtect  //内存保护
+);
+</code></pre>
+<p><code>WriteProcessMemory</code>函数：</p>
+<pre><code class="c++">BOOL WriteProcessMemory(
+  [in]  HANDLE  hProcess,  //要修改的进程内存的句柄
+  [in]  LPVOID  lpBaseAddress, //指向将数据写入到的指定进程中基址的指针
+  [in]  LPCVOID lpBuffer, //指向缓冲区的指针，包含要写入指定进程的地址空间中的数据
+  [in]  SIZE_T  nSize,  //要写入指定进程的字节数
+  [out] SIZE_T  *lpNumberOfBytesWritten //指向变量的指针，该变量接收传输到指定进程的字节数
+);
+</code></pre>
+<p><code>CreateRemoteThread</code>函数：</p>
+<pre><code class="c++">HANDLE CreateRemoteThread(
+  [in]  HANDLE                 hProcess,  //要在其中创建线程的进程句柄
+  [in]  LPSECURITY_ATTRIBUTES  lpThreadAttributes, 
+  [in]  SIZE_T                 dwStackSize, 
+  [in]  LPTHREAD_START_ROUTINE lpStartAddress,
+  [in]  LPVOID                 lpParameter,
+  [in]  DWORD                  dwCreationFlags,
+  [out] LPDWORD                lpThreadId
+);
+</code></pre>
+<p>实验示例：</p>
+<p><img src="/images/image-20241109152908881.png" alt="image-20241109152908881"></p>
+<p>典型的DLL注入代码的模式，我们的主要任务主要是通过这些Windows API的参数获取到重要字符串：</p>
+<ol>
+<li>注入了哪个目标进程</li>
+<li>注入了哪些DLL的信息</li>
+<li>注入的DLL要干什么</li>
+</ol>
+<p>确定了我们的分析目标，就可以进行接下来的分析，</p>
+<p>首先，尝试在<code>OpenProcess</code>函数中找到对进程对象的访问<code>dwDesiredAccess</code>，</p>
+<p><img src="/images/image-20241109153921144.png" alt="image-20241109153921144"></p>
+<p>可以看到这个参数的值是ecx寄存器的值，而ecx的值又来自于上一条mov指令，向上追踪找到这块流程，</p>
+<p><img src="/images/image-20241109154711817.png" alt="image-20241109154711817"></p>
+<p>深入分析sub_401000函数，发现explorer.exe痕迹，仔细分析这段函数逻辑，主要实现了打开一个指定进程ID的进程，获取进程的某些信息，并进行字符串比较。如果字符串比较结果为 explorer.exe，则返回 1，否则返回 0。</p>
+<p>回答第一个问题，目标进程就是<code>explorer.exe</code>。</p>
+<p>这里有个问题，我尝试直接通过OD在目标寄存器上打断点读取数值，但不知道为什么读取不到。</p>
+<p>要回答第二个问题，主要是读取<code>WriteProcessMemory</code>函数的lpBuffer缓冲区的数值,</p>
+<p><img src="/images/image-20241109155702944.png" alt="image-20241109155702944"></p>
+<p>对eax寄存器追根溯源，</p>
+<p><img src="/images/image-20241109160001277.png" alt="image-20241109160001277"></p>
+<p>eax寄存器的值，即传入buffer中的值，就是在这调用了GetCurrentDirectoryA函数获取当前路径，并与Lab12-01.dll拼接传入。</p>
+<p><img src="/images/image-20241109160657094.png" alt="image-20241109160657094"></p>
+<p>后面就是将dll注入到本地进程中，并进行远程启动的过程。</p>
+<p><img src="/images/image-20241109161511335.png" alt="image-20241109161511335"></p>
+<p>可以在Procmon找到痕迹，用火绒剑更好。</p>
+<p>第三个问题通过静态分析DLL或者直接运行EXE能得到答案，</p>
+<p>直接载入DLL文件，直接查看IAT表，点进去看流程逻辑，这里省略了，</p>
+<p><img src="/images/image-20241109162049268.png" alt="image-20241109162049268"></p>
+<p>就是一个固定时间内循环弹出弹窗的小恶作剧了啦哈哈哈~</p>
+<ul>
+<li><h3 id="直接注入"><a href="#直接注入" class="headerlink" title="直接注入"></a><strong>直接注入</strong></h3></li>
+</ul>
+<p>基本原理：通过操作远程进程的内存，直接将代码（通常是shellcode）写入到目标进程的地址空间中，并且在目标进程中执行这些代码。</p>
+<p>大致步骤：</p>
+<pre><code>获取远程进程的句柄：使用OpenProcess获取目标进程的句柄
+分配内存空间：使用VirtualAllocEx在目标进程中分配内存
+写入代码：使用WriteProcessMemory将代码写入内存空间
+执行代码：使用 CreateRemoteThread 来在目标进程中创建新线程，并让这个线程执行注入的代码
+</code></pre>
+<p><u>tips</u>：这里和DLL注入主要的区别在于<strong>代码执行</strong>的部分，DLL注入需要LoadLibrary等函数去导入并执行，主要依赖DLL文件，直接注入的代码可以直接运行，主要依赖于写入的内存。</p>
+<p>实验示例：</p>
+<p>以一段shellcode的直接注入为例，</p>
+<p><img src="/images/image-20241111145537050.png" alt="image-20241111145537050"></p>
+<p><img src="/images/image-20241111145644920.png" alt="image-20241111145644920"></p>
+<p>我是直接使用交叉引用查找可疑API 函数，</p>
+<p><img src="/images/image-20241111145906306.png" alt="image-20241111145906306"></p>
+<p>这里跟前文一样分析，很快发现是想注入到iexplore.exe浏览器进程中，</p>
+<p>我的目的是知道注入的什么东西，直接断到缓冲区的指针，发现shellcode缓冲区基址</p>
+<p><img src="/images/image-20241111150343031.png" alt="image-20241111150343031"></p>
+<p>查看<code>00407030</code>的汇编指令，IDA中反汇编失败，全是数据，这里存在Shellcode编码，只能动态调试，</p>
+<p><img src="/images/image-20241111150737831.png" alt="image-20241111150737831"></p>
+<p>单步调试几条指令后，发现这里存在一个循环，是shellcode解码的过程，</p>
+<p><img src="/images/image-20241111151104235.png" alt="image-20241111151104235"></p>
+<p>跳过循环，程序会进入到<code>00407048</code>攻击载荷部分，同时也可以发现，循环过程中这一段解码完成，</p>
+<p>将解码完成的ShellCode尝试dump下来，</p>
+<p><img src="/images/image-20241111151657906.png" alt="image-20241111151657906"></p>
+<p>结构很简单，但是shellcode数据和代码混写的特性让IDA反汇编失败，这不影响我们分析，重点在于<code>loc_4071B6</code>和<code>sub_4070E3</code>，</p>
+<p><strong>loc_4071B6：</strong></p>
+<p>将单字节数据转换为双字节数据，得到ShellCode的哈希数据，</p>
+<p><img src="/images/image-20241111152139761.png" alt="image-20241111152139761"></p>
+<p><strong>sub_4070E3：</strong></p>
+<p>这个函数将哈希数据传入以后，有一个明显的循环，怀疑是哈希处理函数，</p>
+<p><img src="/images/image-20241111152801759.png" alt="image-20241111152801759"></p>
+<p>ShellCode自包含特性：</p>
+<p>1.寻找系统DLL文件基地址</p>
+<p>2.自动解析符号标志</p>
+<p>sub_4070C2和sub_407076函数就是完成了这两个过程，</p>
+<p><code>sub_4070C2:</code></p>
+<p><img src="/images/image-20241111153837808.png" alt="image-20241111153837808"></p>
+<p>这个函数主要是找到了kernel32.dll文件的基地址，</p>
+<p>具体的ShellCode如何在内存中找到Kernel32.dll过程，可以参考在网上找到的重要结构体神图。</p>
+<p><img src="/images/webp.webp" alt="img"></p>
+<p>简化版：</p>
+<p><img src="/images/image-20241111154520101.png" alt="image-20241111154520101"></p>
+<p><code>sub_407076:</code></p>
+<p><img src="/images/image-20241111162105599.png" alt="image-20241111162105599"></p>
+<p>重点也在循环部分，</p>
+<p><strong><code>jecxz</code></strong>: 若 <code>ecx</code> 为零，则跳转到 <code>loc_4070B8</code>，这是循环终止的条件。</p>
+<p><strong><code>dec ecx</code></strong>: 每次迭代减小 <code>ecx</code> 的值，直到它为零。</p>
+<p><strong><code>mov esi, [ebx+ecx\*4]</code></strong>: 从导入表中获取函数地址并储存在 <code>esi</code> 中。</p>
+<p><strong><code>add esi, ebp</code></strong>: 将 RVA 转为实际地址。</p>
+<p>这个函数主要是完成了根据哈希数组去查找DLL文件中特定的导出表函数，并返回该函数的地址。</p>
+<p><img src="/images/image-20241111162820848.png" alt="image-20241111162820848"></p>
+<p>打断点调试，调试打断点，</p>
+<p><img src="/images/image-20241111164207826.png" alt="image-20241111164207826"></p>
+<p><img src="/images/image-20241111164248814.png" alt="image-20241111164248814"></p>
+<p>可以看到ShellCode主要是找到<code>Kernel32.dll</code>和<code>WS2_32.dll</code>文件，</p>
+<p>主要解析这两个文件中的<code>LoadLibraryA</code>、<code>CreateProcessA</code>、<code>TerminateProcess</code>、<code>GetCurrentProcess</code>和<code>WSAStartup</code>、<code>WSASocketA</code>、<code>connet</code>函数。</p>
+<p>可以对ShellCode做一个行为分析：它想要创建一个新的线程，并且尝试创建套接字跟远程进程进行连接。</p>
+<p>createprocess函数细节：</p>
+<p><img src="/images/image-20241111173026373.png" alt="image-20241111173026373"></p>
+<p>这里创建了一个cmd.exe进程，</p>
+<p>connect函数细节：</p>
+<p><img src="/images/image-20241111172012041.png" alt="image-20241111172012041"></p>
+<p><strong>02 00</strong>：协议类型。</p>
+<p><strong>34 12</strong>：源端口号：13330。</p>
+<p><strong>C0 A8 C8 02</strong>：IP 地址，可以转换为 <code>192.168.200.2</code>。</p>
+<p>总结：这个EXE可执行文件尝试将shellcode直接注入到浏览器进程中，进行反弹shell连接。</p>
+<ul>
+<li><h3 id="DLL劫持"><a href="#DLL劫持" class="headerlink" title="DLL劫持"></a><strong>DLL劫持</strong></h3></li>
+</ul>
+<p>基本原理：通过将DLL文件放在被目标程序加载的路径中，从而诱使程序加载并执行代码。</p>
+<p>DLL文件的加载顺序：</p>
+<p>一、Windows XP SP2之前 Windows查找DLL的目录以及对应的顺序：</p>
+<pre><code>1. 进程对应的应用程序所在目录；
+2. 当前目录（Current Directory）；
+3. 系统目录（通过 GetSystemDirectory 获取）；
+4. 16位系统目录；
+5. Windows目录（通过 GetWindowsDirectory 获取）；
+6. PATH环境变量中的各个目录；
+</code></pre>
+<p>二、在Windows xp sp2之后</p>
+<p>Windows查找DLL的目录以及对应的顺序（SafeDllSearchMode 默认会被开启）：</p>
+<p>默认注册表为：</p>
+<pre><code>HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\SafeDllSearchMode， //其键值为1
+</code></pre>
+<p>dll文件加载顺序：</p>
+<pre><code>1. 进程对应的应用程序所在目录（可理解为程序安装目录比如C:ProgramFilesuTorrent）；
+2. 系统目录（即%windir%system32）；
+3. 16位系统目录（即%windir%system）；
+4. Windows目录（即%windir%）；
+5. 当前目录（运行的某个文件所在目录，比如C:DocumentsandSettingsAdministratorDesktoptest）；
+6. PATH环境变量中的各个目录；
+</code></pre>
+<p>三、Windows7以上</p>
+<p>系统没有了SafeDllSearchMode 而采用KnownDLLs，那么凡是此项下的DLL文件就会被禁止从EXE自身所在的目录下调用，而只能从系统目录即SYSTEM32目录下调用，其注册表位置：</p>
+<pre><code>计算机\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SessionManager\KnownDLLs
+</code></pre>
+<p>根据dll文件的路径，去注册表里面找。</p>
+<p>DLL劫持 vs DLL注入：</p>
+<table>
+<thead>
+<tr>
+<th><strong>特点</strong></th>
+<th><strong>DLL 劫持</strong></th>
+<th><strong>DLL 注入</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>工作原理</strong></td>
+<td>利用目标程序的 DLL 加载路径漏洞，强制程序加载恶意 DLL 文件。</td>
+<td>通过调用 API（如 <code>CreateRemoteThread</code>），将恶意 DLL 加载到目标进程的内存中，并执行其中的代码。</td>
+</tr>
+<tr>
+<td><strong>执行时机</strong></td>
+<td>恶意 DLL 会在目标程序启动时自动加载并执行。</td>
+<td>恶意 DLL 可以在目标程序运行时随时加载并执行。</td>
+</tr>
+<tr>
+<td><strong>依赖条件</strong></td>
+<td>依赖于目标程序对 DLL 文件路径的搜索顺序漏洞，通常不需要修改目标程序的代码。</td>
+<td>需要通过 API 操作目标进程的内存，通常需要更复杂的代码和攻击手段。</td>
+</tr>
+<tr>
+<td><strong>隐蔽性</strong></td>
+<td>相对隐蔽，因为恶意 DLL 会在程序启动时自动加载，不需要直接操作目标进程的内存。</td>
+<td>相对显著，因为恶意代码需要通过注入手段操作目标进程的内存，可能更容易被检测。</td>
+</tr>
+<tr>
+<td><strong>控制能力</strong></td>
+<td>对目标程序的控制有限，通常只能够替换或篡改某些函数的行为。</td>
+<td>可以完全控制目标进程，进行全面的行为修改、数据窃取等操作。</td>
+</tr>
+<tr>
+<td><strong>适用场景</strong></td>
+<td>适用于没有正确处理 DLL 路径的程序，攻击者通过将恶意 DLL 文件放置在程序可搜索到的位置来实现劫持。</td>
+<td>适用于需要直接修改目标进程行为、执行恶意代码的场景，攻击者可以直接操控进程。</td>
+</tr>
+</tbody></table>
+<p>DLL劫持实现的方法多种多样，比如第三方软件劫持等等，我这里主要是对恶意软件的行为做分析，不详细介绍攻击手法。</p>
+<p>了解了恶意程序做DLL劫持的基本原理，有助于我们遇到这种情况时去监控DLL加载路径、检查不匹配的DLL版本、分析程序行为和实时监控注册表及文件系统的变化。</p>
+<h2 id="进程替换"><a href="#进程替换" class="headerlink" title="进程替换"></a>进程替换</h2><p>基本原理：直接用恶意代码替换目标进程的内存空间。</p>
+<p>大致步骤：</p>
+<pre><code>挂起进程：利用CreateProcess设置进程CREATE_SUSPENDED挂起
+释放内存：利用ZwUnmapViewOfSection或NtUnmapViewOfSection来取消映射目标进程的内存
+分配内存：利用VirtualAllocEx为恶意软件分配新内存
+写入内存：使用WriteProcessMemory将每个恶意软件的部分写入目标进程空间
+恢复进程：使用SetThreadContext将entrypoint指向恶意代码，最后ResumeThread函数恢复进程
+</code></pre>
+<p>实验示例：</p>
+<p>Sha256：eae72d803bf67df22526f50fc7ab84d838efb2865c27aef1a61592b1c520d144</p>
+<p>在沙箱中的分析报告显示存在进程替换行为，</p>
+<p><img src="/images/image-20241112153119978.png" alt="image-20241112153119978"></p>
+<p><img src="/images/image-20241112153540606.png" alt="image-20241112153540606"></p>
+<h2 id="文件注入"><a href="#文件注入" class="headerlink" title="文件注入"></a>文件注入</h2><ul>
+<li><h3 id="PE注入"><a href="#PE注入" class="headerlink" title="PE注入"></a>PE注入</h3></li>
+</ul>
+<p>基本原理：将恶意代码或数据注入到PE文件的头部空白区域，例如DOS头、PE头或节表中，涉及到对PE文件结构的修改。</p>
+<p>大致步骤：</p>
+<pre><code>打开PE文件：使用GetFileType函数找到目标PE文件
+获取PE头：使用RtlImageNtHeader函数在PE图像中找到IMAGE_NT_HEADERS
+插入代码：使用SetThreadContext函数设置代码上下文，并用WriteProcessMemory写入
+修改PE头：使用SetFilePointer函数修改 PE 头的 AddressOfEntryPoint 字段，使其指向插入的代码
+</code></pre>
+<p>实验示例：</p>
+<p>Sha256：ce8d7590182db2e51372a4a04d6a0927a65b2640739f9ec01cfd6c143b1110da</p>
+<p><img src="/images/image-20241113171149159.png" alt="image-20241113171149159"></p>
+<p>这个样本只有安天引擎可以检测出DLLinject，</p>
+<ul>
+<li><h3 id="反射式注入"><a href="#反射式注入" class="headerlink" title="反射式注入"></a>反射式注入</h3></li>
+</ul>
+<p>基本原理：将反射式加载器代码注入目标进程的内存，加载器负责将恶意代码映射到内存然后进行执行操作。</p>
+<p>大致步骤：</p>
+<pre><code>打开进程、分配内存以及写入内存：OpenProcess，VirtualAllocEx，WriteProcessMemory
+映射操作：CreateFileMapping，Nt/MapViewOfFile，memcpy，Nt/MapViewOfSection
+执行代码：CreateThread，NtQueueApcThread，CreateRemoteThread，RtlCreateUserThread
+</code></pre>
+<h2 id="APC（异步过程调用）注入"><a href="#APC（异步过程调用）注入" class="headerlink" title="APC（异步过程调用）注入"></a>APC（异步过程调用）注入</h2><p>基本原理：利用了线程异步调用的特性，插入恶意代码APC函数，执行异步过程调用，抢占正在运行的线程的资源，用来运行自己的恶意代码。</p>
+<p>大致步骤：</p>
+<p>当线程因为调用<code>sleepEx、SignalObjactAndWait、MsgWaitForMultipleObjectsEx、WaitForMultiObjectsEx、WaitForSingleObjectEx</code>后退出警戒状态后就会执行被注入的代码，</p>
+<pre><code>捕获快照：利用CreateToolhelp32Snapshot用于捕获系统中特定进程及其使用的堆、模块和线程的快照；
+获取进程：利用OpenProcess、Process32First、Process32Next函数获取目标进程的句柄；
+分配内存：利用VirtualAlloc函数在目标进程中分配内存；
+写入内存：利用ZwAllocateVirtualMemory将用户apc函数和参数拷贝至目标进程地址空间；
+获取线程：利用OpenThread、Thread32First、Thread32Next函数获取目标进程中的线程句柄；
+插入APC：利用QueueUserAPC函数插入目标线程的APC队列中；
+</code></pre>
+<ul>
+<li><strong>用户模式下APC注入</strong></li>
+</ul>
+<p>为应用程序生成的APC，被称为用户模式APC。</p>
+<pre><code class="c++">UserApcPending=1设置用户apc等待状态为1
+DWORD QueueUserAPC(
+  [in] PAPCFUNC  pfnAPC, 	//指向程序提供的APC函数的指针
+  [in] HANDLE    hThread,  //线程的句柄
+  [in] ULONG_PTR dwData 	//传递给APC函数的参数值
+);
+这个函数要求句柄为hTread的线程使用参数dwData运行pfnAPC定义的函数。
+</code></pre>
+<p><img src="/images/image-20241114161032419.png" alt="image-20241114161032419"></p>
+<ul>
+<li><strong>内核模式下APC注入</strong></li>
+</ul>
+<p>为系统或者驱动生成的APC，被称为内核模式APC。</p>
+<pre><code>KeInitializeApc：APC必须调用这个函数进行初始化
+KeInsertQueueApc：插入APC队列
+第一个函数初始化一个KAPC结构，它必须传递给第二个函数，以将APC对象放在目标线程相应的APC队列中。
+</code></pre>
+<p>内核模式下的异步过程调用（APC）是通过内核异步过程调用（KAPC）结构来实现的。KAPC结构是内核模式下APC的核心数据结构，用于管理和调度APC函数的执行。</p>
+<p>KAPC结构：</p>
+<pre><code class="c">typedef struct _KAPC &#123;
+    LIST_ENTRY ApcListEntry;  // 用于将KAPC结构链接到线程的APC队列
+    PKTHREAD Thread;          // 指向目标线程的指针
+    KAPC_ENVIRONMENT ApcStateIndex;  // APC状态索引
+    KPROCESSOR_MODE ApcMode;  // APC执行模式（用户模式或内核模式）
+    BOOLEAN Inserted;         // 指示KAPC是否已插入到APC队列中
+    union &#123;
+        struct &#123;
+            PKKERNEL_ROUTINE KernelRoutine;  // 内核模式APC例程
+            PKRUNDOWN_ROUTINE RundownRoutine;  // 运行时例程
+            PKNORMAL_ROUTINE NormalRoutine;  // 用户模式APC例程
+            PVOID NormalContext;  // 用户模式APC例程的上下文
+            PVOID SystemArgument1;  // 系统参数1
+            PVOID SystemArgument2;  // 系统参数2
+        &#125;;
+        UCHAR ApcReserved[APC_ALLOCATION_SIZE];  // 保留字段
+    &#125;;
+&#125; KAPC, *PKAPC;
+</code></pre>
+<p><img src="/images/image-20241114161157747.png" alt="image-20241114161157747"></p>
+<p><img src="/images/image-20241114160944243.png" alt="image-20241114160944243"></p>
+<ul>
+<li><strong>AtomBombing（APC注入变种）</strong></li>
+</ul>
+<p>基本原理：将恶意代码插入目标进程的Atom表中，并通过触发Atom表操作来执行恶意代码。</p>
+<p>Atom表（Atom Table）是系统维护的一个全局表，用于存储这些Atom。Atom的主要用途是提供一种快速查找和比较字符串的方法，系统会为每个字符串或整数分配一个唯一的Atom ID。</p>
+<p>大致步骤：</p>
+<p>将恶意payload分割成独立的字符串，为每个给定的字符串创建一个Atom，将他们复制到RW段，并设置上下文进行执行。</p>
+<pre><code>获取目标线程：OpenThread函数
+插入Atom表项：使用GlobalAddAtom、QueueUserAPC函数将恶意代码的起始地址插入到Atom表中。
+触发Atom表操作：使用GlobalGetAtomName函数触发Atom表操作，从而执行恶意代码。
+</code></pre>
+<p>实验示例：</p>
+<ul>
+<li><strong>Early bird（APC注入变种）</strong></li>
+</ul>
+<p>基本原理：在目标进程初始化阶段创建远程线程并加载恶意DLL，使得恶意代码能够在目标进程的主线程执行之前被加载和执行。</p>
+<p>大致步骤：</p>
+<pre><code>创建线程：CreateProcessA
+申请内存：VirtualAllocEx
+写入shellcode：WriteProcessMemory
+插入APC：QueueUserAPC
+</code></pre>
+<p>tips：跟用户模式下的apc注入的最主要区别是在于恶意代码插入的时间不同，apc注入可以在线程运行时，这个变种是在线程尚未初始化的时候。</p>
+<p>实验示例：</p>
+<pre><code class="c">#include &lt;Windows.h&gt;
+
+int main() &#123;
+
+ unsigned char shellcode[] = &quot;&lt;shellcode&gt;&quot;; //shellcode  &quot;\xfc\x48\x83\xe4&quot;
+
+ SIZE_T shellSz = sizeof(buff);
+ STARTUPINFOA st = &#123; 0 &#125;;
+ PROCESS_INFORMATION prt = &#123; 0 &#125;;
+
+ CreateProcessA(&quot;C:\\Windows\\System32\\notepad.exe&quot;, NULL, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &amp;st, &amp;prt);
+
+ HANDLE victimProcess = prt.hProcess;
+ HANDLE threadHandle = prt.hThread;
+ LPVOID shellAddr = VirtualAllocEx(victimProcess, NULL, shellSz, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+ PTHREAD_START_ROUTINE apcRoutine = (PTHREAD_START_ROUTINE)shellAddr;
+
+ WriteProcessMemory(victimProcess, shellAddr, buff, shellSz, NULL);
+ QueueUserAPC((PAPCFUNC)apcRoutine, threadHandle, NULL);
+ ResumeThread(threadHandle);
+    
+ return 0;
+&#125;
+</code></pre>
+<h2 id="Detours"><a href="#Detours" class="headerlink" title="Detours"></a>Detours</h2><p>Detours是微软研究院开发的库，主要用于Windows平台。</p>
+<p>个人觉得Detours注入很像HOOK技术和JAVA中的重写技术，</p>
+<p>基本原理：通过修改目标函数的入口地址，将控制流重定向到自定义的拦截函数。</p>
+<p>大致步骤：</p>
+<pre><code>初始化：需要调用DetourTransactionBegin和DetourUpdateThread等API函数来初始化Detours库
+拦截目标函数：使用DetourAttach函数将目标函数的入口地址替换为自定义函数的地址
+恢复目标函数：可以使用DetourDetach函数将目标函数的入口地址恢复为原始地址
+提交事务：使用DetourTransactionCommit函数提交事务，确保所有的拦截操作生效
+</code></pre>
+<p>实验示例：</p>
+<pre><code class="c">#include &lt;windows.h&gt;
+#include &lt;detours.h&gt;
+
+// 原始的MessageBoxA函数指针
+typedef int (WINAPI *PFN_MessageBoxA)(HWND, LPCSTR, LPCSTR, UINT);
+PFN_MessageBoxA OriginalMessageBoxA = NULL;
+
+// 自定义的拦截函数
+int WINAPI HookedMessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) &#123;
+    // 在调用原始函数之前执行自定义代码
+    MessageBoxA(NULL, &quot;Hooked!&quot;, &quot;Hooked&quot;, MB_OK);
+
+    // 调用原始的MessageBoxA函数
+    return OriginalMessageBoxA(hWnd, lpText, lpCaption, uType);
+&#125;
+
+int main() &#123;
+    // 初始化Detours库
+    DetourTransactionBegin();
+    DetourUpdateThread(GetCurrentThread());
+
+    // 获取原始的MessageBoxA函数地址
+    OriginalMessageBoxA = (PFN_MessageBoxA)GetProcAddress(GetModuleHandleA(&quot;user32.dll&quot;), &quot;MessageBoxA&quot;);
+
+    // 拦截MessageBoxA函数
+    DetourAttach((PVOID*)&amp;OriginalMessageBoxA, HookedMessageBoxA);
+
+    // 提交事务
+    DetourTransactionCommit();
+
+    // 调用MessageBoxA函数，触发拦截
+    MessageBoxA(NULL, &quot;Hello, World!&quot;, &quot;Test&quot;, MB_OK);
+
+    // 恢复原始的MessageBoxA函数
+    DetourTransactionBegin();
+    DetourUpdateThread(GetCurrentThread());
+    DetourDetach((PVOID*)&amp;OriginalMessageBoxA, HookedMessageBoxA);
+    DetourTransactionCommit();
+
+    return 0;
+&#125;
+</code></pre>
+
+    </div>
+
+</div>
+                <div class="footer">
+    <span>Copyright © 2022 J47erry&#39;S BLOG</span>
+    <span>Theme Designed By <a target="_blank" href="https://zheli.design/one-paper">這Li</a></span>
+</div>
+
+
+<link rel="stylesheet" href="/css/a11y-dark.min.css">
+
+
+<script src="/js/highlight.min.js"></script>
+
+
+<script src="/js/highlightjs-line-numbers.js"></script>
+
+
+<script>
+    hljs.initHighlightingOnLoad();
+    hljs.initLineNumbersOnLoad();
+</script>
+
+            </div>
+        </div>
+    </body>
+</html>

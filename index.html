@@ -38,7 +38,26 @@
                 <div class="post-list">
     
     <div class="post">
-        <a class="post-title" href="/2024/11/15/Anti-virtualization%EF%BC%88%E9%99%84CVE-2024-37081%E6%BC%8F%E6%B4%9E%E8%A7%A3%E6%9E%90%EF%BC%89/">#Anti-virtualization（附CVE-2024-37081漏洞解析）</a>
+        <a class="post-title" href="/2024/11/13/%E6%B3%A8%E5%85%A5%E5%92%8Chook/">#从样本分析中学习病毒隐蔽启动过程</a>
+        <div class="post-except">
+            
+本文首发于先知社区，原文链接：https://xz.aliyun.com/t/16250
+进程注入
+DLL注入
+
+基本原理：将自定义DLL的路径传递给目标进程，并使目标进程调用 LoadLibrary 函数加载该DLL。
+大致步骤：
+获取远程进程的句柄：使用OpenProcess打开目标进程
+分配内存空间：使用VirtualAllocEx在目标进程中分配内存
+写入DLL路径：使用WriteProcessMemory将DLL路径写入目标进程的内存
+加载DLL：使用Create
+            <a class="read-more" href="/2024/11/13/%E6%B3%A8%E5%85%A5%E5%92%8Chook/"> ... </a>
+        </div>
+        <div class="post-date">2024.11.13</div>
+    </div>
+    
+    <div class="post">
+        <a class="post-title" href="/2024/11/02/Anti-virtualization%EF%BC%88%E9%99%84CVE-2024-37081%E6%BC%8F%E6%B4%9E%E8%A7%A3%E6%9E%90%EF%BC%89/">#Anti-virtualization（附CVE-2024-37081漏洞解析）</a>
         <div class="post-except">
             
 本文首发于先知社区，原文链接：Anti-virtualization（附CVE-2024-37081漏洞解析） - 先知社区
@@ -49,25 +68,26 @@ VMware痕迹
 可以使用Process32First，Process32Next等Windows API函数列举系统中的进程列表，主要是为了探测是否存在虚拟机的痕迹：
 Vmware:
 Vmtoolsd.
-            <a class="read-more" href="/2024/11/15/Anti-virtualization%EF%BC%88%E9%99%84CVE-2024-37081%E6%BC%8F%E6%B4%9E%E8%A7%A3%E6%9E%90%EF%BC%89/"> ... </a>
+            <a class="read-more" href="/2024/11/02/Anti-virtualization%EF%BC%88%E9%99%84CVE-2024-37081%E6%BC%8F%E6%B4%9E%E8%A7%A3%E6%9E%90%EF%BC%89/"> ... </a>
         </div>
-        <div class="post-date">2024.11.15</div>
+        <div class="post-date">2024.11.02</div>
     </div>
     
     <div class="post">
-        <a class="post-title" href="/2024/11/07/%E4%BB%8E%E6%A0%B7%E6%9C%AC%E5%88%86%E6%9E%90%E4%B8%AD%E5%AD%A6%E4%B9%A0%E7%97%85%E6%AF%92%E9%87%8A%E6%94%BE%E8%BF%87%E7%A8%8B/">#从样本分析中学习病毒释放过程</a>
+        <a class="post-title" href="/2024/10/29/%E4%BB%8E%E6%A0%B7%E6%9C%AC%E5%88%86%E6%9E%90%E4%B8%AD%E5%AD%A6%E4%B9%A0%E7%97%85%E6%AF%92%E9%87%8A%E6%94%BE%E8%BF%87%E7%A8%8B/">#从样本分析中学习病毒释放过程</a>
         <div class="post-except">
             
-本文首发于先知社区，原文链接：https://xz.aliyun.com/t/16027?time__1311=GuD%3DYK0KBI8x%2FD0ltd0QritEZ8sjAeD
+本文首发于先知社区，原文链接：https://xz.aliyun.com/t/16027
 静态分析通过编写的py脚本，对目标样本先进行简单的静态分析，
 Section
 对样本的结构有了大致了解，结构呈现完整，虚拟内存和内存大小没有发现明显异常，初步判断可能没有加壳，可以通过工具分析，这里只是为了练手。
 具体代码如下：
 import pefile
-pe = pefile.PE(&qu
-            <a class="read-more" href="/2024/11/07/%E4%BB%8E%E6%A0%B7%E6%9C%AC%E5%88%86%E6%9E%90%E4%B8%AD%E5%AD%A6%E4%B9%A0%E7%97%85%E6%AF%92%E9%87%8A%E6%94%BE%E8%BF%87%E7%A8%8B/"> ... </a>
+pe = pefile.PE(&quot;ircbot.exe&quot;)
+for section in pe.sections
+            <a class="read-more" href="/2024/10/29/%E4%BB%8E%E6%A0%B7%E6%9C%AC%E5%88%86%E6%9E%90%E4%B8%AD%E5%AD%A6%E4%B9%A0%E7%97%85%E6%AF%92%E9%87%8A%E6%94%BE%E8%BF%87%E7%A8%8B/"> ... </a>
         </div>
-        <div class="post-date">2024.11.07</div>
+        <div class="post-date">2024.10.29</div>
     </div>
     
     <div class="post">
@@ -197,20 +217,6 @@ CS 分离免杀上线首先cs上生成raw格式的木马，然后使用加载器
             <a class="read-more" href="/2022/10/07/CS%20%E5%88%86%E7%A6%BB%E5%85%8D%E6%9D%80%E4%B8%8A%E7%BA%BF/"> ... </a>
         </div>
         <div class="post-date">2022.10.07</div>
-    </div>
-    
-    <div class="post">
-        <a class="post-title" href="/2022/08/05/Medium-Socialnetwork-%E9%9D%B6%E5%9C%BA/">#Medium_Socialnetwork(靶场)</a>
-        <div class="post-except">
-            Medium_Socialnetwork（靶场）信息收集阶段进行主机的发现，由于已知主机跟Kali在同一网段下 ,所以使用 arp-scan 工具扫描
-
-主机发现阶段发现同一网段下有三个资产，第一个大概率是网关，第二个经验证是物理机的地址，猜测第三个地址为靶机地址，接下来要对靶机进行端口的扫描，以发现靶机上运行的服务
-使用nmap进行端口扫描，第一步是对目标进行端口的发现
-
-发现靶机上开了两个端口，其中一个是22端口（SSH服务），另一个是非常见端口5000。针对SSH服务常
-            <a class="read-more" href="/2022/08/05/Medium-Socialnetwork-%E9%9D%B6%E5%9C%BA/"> ... </a>
-        </div>
-        <div class="post-date">2022.08.05</div>
     </div>
     
 </div>
