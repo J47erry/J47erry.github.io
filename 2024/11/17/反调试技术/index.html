@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
+    <link rel="alternate icon" type="image/png" href="/img/favicon.png">
+    <title>J47erry&#39;S BLOG | 杰歪</title>
+    
+<link rel="stylesheet" href="/css/reset.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<link rel="stylesheet" href="/css/markdown.css">
+
+    
+<link rel="stylesheet" href="/css/fonts.css">
+
+<meta name="generator" content="Hexo 6.2.0"></head>
+    <body>
+        <div class="paper">
+            <div class="paper-main">
+                
+                    <div class="post-header">
+    <a class="logo" href="/">J47erry&#39;S BLOG</a>
+    <a class="go-home" href="/">
+        <svg width="8" height="14" viewBox="0 0 8 14">
+            <path d="M7 1L1 7l6 6" stroke="#000" stroke-width="2" fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </a>
+</div>
+                
+                <div class="post-main">
+
+    
+        <div class="post-main-title">
+            
+        </div>
+        <div class="post-meta">
+            2024-11-17
+        </div>
+    
+
+    <div class="post-md">
+        <h2 id="探测Windows调试器"><a href="#探测Windows调试器" class="headerlink" title="探测Windows调试器"></a>探测Windows调试器</h2><ul>
+<li><strong>使用Windows API</strong></li>
+</ul>
+<p><code>IsDebuggerPresent</code>查询进程环境块中的isdebugged标志。如果进程没有运行在调试器环境中，函数返回0；如果调试附加了进程，函数返回一个非零值。</p>
+<pre><code class="c++">BOOL CheckDebug()  
+&#123;  
+    return IsDebuggerPresent();  
+&#125;  
+</code></pre>
+<p><code>CheckRemoteDebuggerPresent</code>同<code>IsDebuggerPresent</code>几乎一致。它不仅可以探测进程自身是否被调试，同时可以探测系统其他进程是否被调试。原理是将一个进程句柄作为参数，检查这个句柄对应的进行是否被调试器附加。如果函数成功，则返回值为非零。</p>
+<pre><code class="c++">BOOL CheckDebug()  
+&#123;  
+    BOOL ret;  
+    CheckRemoteDebuggerPresent(GetCurrentProcess(), &amp;ret);  
+    return ret;  
+&#125;
+</code></pre>
+<p><code>NtQueryInformoationProcess</code>属于Ntdll.dll文件中的一个API</p>
+<pre><code class="c++">__kernel_entry NTSTATUS NtQueryInformationProcess(
+  [in]            HANDLE           ProcessHandle,   //进程句柄
+  [in]            PROCESSINFOCLASS ProcessInformationClass, //需要提取进程信息的类型
+  [out]           PVOID            ProcessInformation,
+  [in]            ULONG            ProcessInformationLength,
+  [out, optional] PULONG           ReturnLength
+);
+
+//以调试端口为例，如果成功，返回进程端口，失败则返回0
+BOOL CheckDebug()  
+
+&#123;  
+
+    int debugPort = 0;  
+
+    HMODULE hModule = LoadLibrary(&quot;Ntdll.dll&quot;);  
+
+    NtQueryInformationProcessPtr NtQueryInformationProcess = (NtQueryInformationProcessPtr)GetProcAddress(hModule, &quot;NtQueryInformationProcess&quot;);  
+
+    NtQueryInformationProcess(GetCurrentProcess(), 0x7, &amp;debugPort, sizeof(debugPort), NULL);  
+
+    return debugPort != 0;  
+
+&#125; 
+</code></pre>
+<p><code>OutputDebugString</code>和<code>GetLastError</code>：使用SetLastError函数，将当前的错误码设置为一个任意值。如果进程没有被调试器附加，调用OutputDebugString函数会失败，错误码会重新设置，因此GetLastError获取的错误码应该不是我们设置的任意值。但如果进程被调试器附加，调用OutputDebugString函数会成功，这时GetLastError获取的错误码应该没改变。</p>
+<pre><code class="c++">BOOL CheckDebug()  
+&#123;  
+
+    DWORD errorValue = 12345;  
+    SetLastError(errorValue);  
+    OutputDebugString(&quot;Test for debugger!&quot;);  
+    if (GetLastError() == errorValue)  
+    &#123;  
+        return TRUE;  
+    &#125;  
+    else  
+    &#123;  
+        return FALSE;  
+    &#125;  
+&#125; 
+
+//对于DeleteFiber函数，如果给它传递一个无效的参数的话会抛出ERROR_INVALID_PARAMETER异常。如果进程正在被调试的话，异常会被调试器捕获。所以，同样可以通过验证LastError值来检测调试器的存在。如代码所示，0x57就是指ERROR_INVALID_PARAMETER。
+BOOL CheckDebug()  
+&#123;  
+    char fib[1024] = &#123;0&#125;;  
+    DeleteFiber(fib);  
+    return (GetLastError() != 0x57);  
+&#125; 
+
+//同样还可以使用CloseHandle、CloseWindow产生异常，使得错误码改变。
+BOOL CheckDebug()  
+&#123;  
+    DWORD ret = CloseHandle((HANDLE)0x1234);  
+    if (ret != 0 || GetLastError() != ERROR_INVALID_HANDLE)  
+    &#123;  
+        return TRUE;  
+    &#125;  
+    else  
+    &#123;  
+        return FALSE;  
+    &#125;  
+&#125;  
+
+BOOL CheckDebug()  
+&#123;  
+    DWORD ret = CloseWindow((HWND)0x1234);  
+    if (ret != 0 || GetLastError() != ERROR_INVALID_WINDOW_HANDLE)  
+    &#123;  
+        return TRUE;  
+    &#125;  
+    else  
+    &#123;  
+        return FALSE;  
+    &#125;  
+&#125; 
+</code></pre>
+<p><code>ZwSetInformationThread</code>用于设置有关线程的信息，调用该函数后，对调试器隐藏当前线程的调试事件，但是不会对正常运行的程序产生影响。</p>
+<pre><code class="c++">NTSYSAPI NTSTATUS ZwSetInformationThread(
+  [in] HANDLE          ThreadHandle,  //线程的句柄
+  [in] THREADINFOCLASS ThreadInformationClass, //线程信息类型
+  [in] PVOID           ThreadInformation,
+  [in] ULONG           ThreadInformationLength
+);
+
+ZwSetInformationThread(GetCurrentThread(), ThreadHideFromDebugger, NULL, 0);
+</code></pre>
+<p>还有一个函数<code>DebugActiveProcessStop</code>与它的区别在于前者用于停止对指定进程的调试。</p>
+<p><strong>解决方案：</strong>在恶意代码运行期间修改恶意代码，使其不能调用探测调试器的API函数；修改这些api函数的返回值，确保恶意代码执行合适的路径；使用rootkit技术hook这些函数。</p>
+<ul>
+<li><strong>手动检测数据结构</strong></li>
+</ul>
+<p>手动执行与Windows API功能相同的操作。主要通过关注PEB结构的一些标志。</p>
+<pre><code class="c++">//PEB（进程环境块）结构
+ntdll!_PEB
+   +0x000 InheritedAddressSpace : UChar
+   +0x001 ReadImageFileExecOptions : UChar
+   +0x002 BeingDebugged    : UChar
+   +0x003 BitField         : UChar
+   +0x003 ImageUsesLargePages : Pos 0, 1 Bit
+   +0x003 IsProtectedProcess : Pos 1, 1 Bit
+   +0x003 IsImageDynamicallyRelocated : Pos 2, 1 Bit
+   +0x003 SkipPatchingUser32Forwarders : Pos 3, 1 Bit
+   +0x003 IsPackagedProcess : Pos 4, 1 Bit
+   +0x003 IsAppContainer   : Pos 5, 1 Bit
+   +0x003 IsProtectedProcessLight : Pos 6, 1 Bit
+   +0x003 IsLongPathAwareProcess : Pos 7, 1 Bit
+   +0x004 Mutant           : Ptr32 Void
+   +0x008 ImageBaseAddress : Ptr32 Void
+   +0x00c Ldr              : Ptr32 _PEB_LDR_DATA
+   +0x010 ProcessParameters : Ptr32 _RTL_USER_PROCESS_PARAMETERS
+   +0x014 SubSystemData    : Ptr32 Void
+   +0x018 ProcessHeap      : Ptr32 Void
+   +0x01c FastPebLock      : Ptr32 _RTL_CRITICAL_SECTION
+   +0x020 AtlThunkSListPtr : Ptr32 _SLIST_HEADER
+   +0x024 IFEOKey          : Ptr32 Void
+   +0x028 CrossProcessFlags : Uint4B
+   +0x028 ProcessInJob     : Pos 0, 1 Bit
+   +0x028 ProcessInitializing : Pos 1, 1 Bit
+   +0x028 ProcessUsingVEH  : Pos 2, 1 Bit
+   +0x028 ProcessUsingVCH  : Pos 3, 1 Bit
+   +0x028 ProcessUsingFTH  : Pos 4, 1 Bit
+   +0x028 ProcessPreviouslyThrottled : Pos 5, 1 Bit
+   +0x028 ProcessCurrentlyThrottled : Pos 6, 1 Bit
+   +0x028 ProcessImagesHotPatched : Pos 7, 1 Bit
+   +0x028 ReservedBits0    : Pos 8, 24 Bits
+   +0x02c KernelCallbackTable : Ptr32 Void
+   +0x02c UserSharedInfoPtr : Ptr32 Void
+   +0x030 SystemReserved   : Uint4B
+   +0x034 AtlThunkSListPtr32 : Ptr32 _SLIST_HEADER
+   +0x038 ApiSetMap        : Ptr32 Void
+   +0x03c TlsExpansionCounter : Uint4B
+   +0x040 TlsBitmap        : Ptr32 Void
+   +0x044 TlsBitmapBits    : [2] Uint4B
+   +0x04c ReadOnlySharedMemoryBase : Ptr32 Void
+   +0x050 SharedData       : Ptr32 Void
+   +0x054 ReadOnlyStaticServerData : Ptr32 Ptr32 Void
+   +0x058 AnsiCodePageData : Ptr32 Void
+   +0x05c OemCodePageData  : Ptr32 Void
+   +0x060 UnicodeCaseTableData : Ptr32 Void
+   +0x064 NumberOfProcessors : Uint4B
+   +0x068 NtGlobalFlag     : Uint4B
+   +0x070 CriticalSectionTimeout : _LARGE_INTEGER
+   +0x078 HeapSegmentReserve : Uint4B
+   +0x07c HeapSegmentCommit : Uint4B
+   +0x080 HeapDeCommitTotalFreeThreshold : Uint4B
+   +0x084 HeapDeCommitFreeBlockThreshold : Uint4B
+   +0x088 NumberOfHeaps    : Uint4B
+   +0x08c MaximumNumberOfHeaps : Uint4B
+   +0x090 ProcessHeaps     : Ptr32 Ptr32 Void
+   +0x094 GdiSharedHandleTable : Ptr32 Void
+   +0x098 ProcessStarterHelper : Ptr32 Void
+   +0x09c GdiDCAttributeList : Uint4B
+   +0x0a0 LoaderLock       : Ptr32 _RTL_CRITICAL_SECTION
+   +0x0a4 OSMajorVersion   : Uint4B
+   +0x0a8 OSMinorVersion   : Uint4B
+   +0x0ac OSBuildNumber    : Uint2B
+   +0x0ae OSCSDVersion     : Uint2B
+   +0x0b0 OSPlatformId     : Uint4B
+   +0x0b4 ImageSubsystem   : Uint4B
+   +0x0b8 ImageSubsystemMajorVersion : Uint4B
+   +0x0bc ImageSubsystemMinorVersion : Uint4B
+   +0x0c0 ActiveProcessAffinityMask : Uint4B
+   +0x0c4 GdiHandleBuffer  : [34] Uint4B
+   +0x14c PostProcessInitRoutine : Ptr32     void 
+   +0x150 TlsExpansionBitmap : Ptr32 Void
+   +0x154 TlsExpansionBitmapBits : [32] Uint4B
+   +0x1d4 SessionId        : Uint4B
+   +0x1d8 AppCompatFlags   : _ULARGE_INTEGER
+   +0x1e0 AppCompatFlagsUser : _ULARGE_INTEGER
+   +0x1e8 pShimData        : Ptr32 Void
+   +0x1ec AppCompatInfo    : Ptr32 Void
+   +0x1f0 CSDVersion       : _UNICODE_STRING
+   +0x1f8 ActivationContextData : Ptr32 _ACTIVATION_CONTEXT_DATA
+   +0x1fc ProcessAssemblyStorageMap : Ptr32 _ASSEMBLY_STORAGE_MAP
+   +0x200 SystemDefaultActivationContextData : Ptr32 _ACTIVATION_CONTEXT_DATA
+   +0x204 SystemAssemblyStorageMap : Ptr32 _ASSEMBLY_STORAGE_MAP
+   +0x208 MinimumStackCommit : Uint4B
+   +0x20c SparePointers    : [4] Ptr32 Void
+   +0x21c SpareUlongs      : [5] Uint4B
+   +0x230 WerRegistrationData : Ptr32 Void
+   +0x234 WerShipAssertPtr : Ptr32 Void
+   +0x238 pUnused          : Ptr32 Void
+   +0x23c pImageHeaderHash : Ptr32 Void
+   +0x240 TracingFlags     : Uint4B
+   +0x240 HeapTracingEnabled : Pos 0, 1 Bit
+   +0x240 CritSecTracingEnabled : Pos 1, 1 Bit
+   +0x240 LibLoaderTracingEnabled : Pos 2, 1 Bit
+   +0x240 SpareTracingBits : Pos 3, 29 Bits
+   +0x248 CsrServerReadOnlySharedMemoryBase : Uint8B
+   +0x250 TppWorkerpListLock : Uint4B
+   +0x254 TppWorkerpList   : _LIST_ENTRY
+   +0x25c WaitOnAddressHashTable : [128] Ptr32 Void
+   +0x45c TelemetryCoverageHeader : Ptr32 Void
+   +0x460 CloudFileFlags   : Uint4B
+   +0x464 CloudFileDiagFlags : Uint4B
+   +0x468 PlaceholderCompatibilityMode : Char
+   +0x469 PlaceholderCompatibilityModeReserved : [7] Char
+   +0x470 LeapSecondData   : Ptr32 _LEAP_SECOND_DATA
+   +0x474 LeapSecondFlags  : Uint4B
+   +0x474 SixtySecondEnabled : Pos 0, 1 Bit
+   +0x474 Reserved         : Pos 1, 31 Bits
+   +0x478 NtGlobalFlag2    : Uint4B
+</code></pre>
+<p><code>BeingDebugged</code>属性：这个标志标识进程是否正在被调试。</p>
+<p><code>ProcessHeap</code>属性：Reserved4数组中一个未公开的位置叫做ProcessHeap，它被设置为加载器为进程分配的第一个堆的位置，第一个堆头部有一个属性字段，它告诉内核这个堆是否在调试器中创建。</p>
+<p><code>NTGlobalFlag</code>属性：系统使用PEB结构偏移量0x68处的一个未公开位置，来决定如何创建堆结构，如果这个位置的值为0x70，我们就知道进程正运行在调试器中。</p>
+<p><strong>解决方法：</strong>在执行跳转指令前，手动修改零标志，强制执行跳转；手动设置BeingDebugged属性值为0。</p>
+<ul>
+<li><strong>系统痕迹检测</strong></li>
+</ul>
+<p><strong>查找调试器引用的注册表项</strong></p>
+<p>调试器主要在AeDebug注册表的位置，</p>
+<p>当应用程序发生错误时，默认情况触发Windows自带的Dr.Watson调试器，如果键值被修改为OllyDbg，则恶意代码可能正在被调试。</p>
+<pre><code class="c++">BOOL CheckDebug()  
+&#123;  
+    BOOL is_64;  
+    IsWow64Process(GetCurrentProcess(), &amp;is_64);  
+    HKEY hkey = NULL;  
+    char key[] = &quot;Debugger&quot;;  
+    char reg_dir_32bit[] = &quot;SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\AeDebug&quot;;  
+    char reg_dir_64bit[] = &quot;SOFTWARE\\Wow6432Node\\Microsoft\\WindowsNT\\CurrentVersion\\AeDebug&quot;;  
+    DWORD ret = 0;  
+    if (is_64)  
+    &#123;  
+        ret = RegCreateKeyA(HKEY_LOCAL_MACHINE, reg_dir_64bit, &amp;hkey);  
+    &#125;  
+    else  
+    &#123;  
+        ret = RegCreateKeyA(HKEY_LOCAL_MACHINE, reg_dir_32bit, &amp;hkey);  
+    &#125;  
+    if (ret != ERROR_SUCCESS)  
+    &#123;  
+        return FALSE;  
+    &#125;  
+    char tmp[256];  
+    DWORD len = 256;  
+    DWORD type;  
+    ret = RegQueryValueExA(hkey, key, NULL, &amp;type, (LPBYTE)tmp, &amp;len);  
+    if (strstr(tmp, &quot;OllyIce&quot;)!=NULL || strstr(tmp, &quot;OllyDBG&quot;)!=NULL || strstr(tmp, &quot;WinDbg&quot;)!=NULL || strstr(tmp, &quot;x64dbg&quot;)!=NULL || strstr(tmp, &quot;Immunity&quot;)!=NULL)  
+    &#123;  
+        return TRUE;  
+    &#125;  
+    else  
+    &#123;  
+        return FALSE;  
+    &#125;  
+&#125;
+</code></pre>
+<p><strong>查找窗体信息</strong></p>
+<p><code>FindWindow</code>函数检索处理顶级窗口的类名和窗口名称匹配指定的字符串。</p>
+<pre><code class="c++">BOOL CheckDebug()  
+&#123;  
+    if (FindWindowA(&quot;OLLYDBG&quot;, NULL)!=NULL || FindWindowA(&quot;WinDbgFrameClass&quot;, NULL)!=NULL || FindWindowA(&quot;QWidget&quot;, NULL)!=NULL)  
+    &#123;  
+        return TRUE;  
+    &#125;  
+    else  
+    &#123;  
+        return FALSE;  
+    &#125;  
+&#125;  
+</code></pre>
+<p><code>EnumWindows</code>函数枚举所有屏幕上的顶层窗口，并将窗口句柄传送给应用程序定义的回调函数。</p>
+<pre><code class="c++">BOOL CheckDebug()  
+&#123;  
+    BOOL ret = FALSE;  
+    EnumWindows(EnumWndProc, (LPARAM)&amp;ret);   
+    return ret;  
+&#125;
+</code></pre>
+<p><code>GetForegroundWindow</code>获取一个前台窗口的句柄。</p>
+<pre><code class="c++">BOOL CheckDebug()  
+&#123;  
+    char fore_window[1024];  
+    GetWindowTextA(GetForegroundWindow(), fore_window, 1023);  
+    if (strstr(fore_window, &quot;WinDbg&quot;)!=NULL || strstr(fore_window, &quot;x64_dbg&quot;)!=NULL || strstr(fore_window, &quot;OllyICE&quot;)!=NULL || strstr(fore_window, &quot;OllyDBG&quot;)!=NULL || strstr(fore_window, &quot;Immunity&quot;)!=NULL)  
+    &#123;  
+        return TRUE;  
+    &#125;  
+    else  
+    &#123;  
+        return FALSE;  
+    &#125;  
+&#125; 
+</code></pre>
+<p><strong>查找进程信息</strong></p>
+<p><img src="/D:/hexo/J47erry/source/images/image-20241029160057623.png" alt="image-20241029160057623"></p>
+<pre><code class="c++">BOOL CheckDebug()  
+&#123;  
+    DWORD ID;  
+    DWORD ret = 0;  
+    PROCESSENTRY32 pe32;  
+    pe32.dwSize = sizeof(pe32);   
+    HANDLE hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0); 
+    if(hProcessSnap == INVALID_HANDLE_VALUE)   
+    &#123;   
+        return FALSE;   
+    &#125;  
+    BOOL bMore = Process32First(hProcessSnap, &amp;pe32);   
+    while(bMore)  
+    &#123;  
+        if (stricmp(pe32.szExeFile, &quot;OllyDBG.EXE&quot;)==0 || stricmp(pe32.szExeFile, &quot;OllyICE.exe&quot;)==0 || stricmp(pe32.szExeFile, &quot;x64_dbg.exe&quot;)==0 || stricmp(pe32.szExeFile, &quot;windbg.exe&quot;)==0 || stricmp(pe32.szExeFile, &quot;ImmunityDebugger.exe&quot;)==0)  
+        &#123;  
+            return TRUE;  
+        &#125;  
+        bMore = Process32Next(hProcessSnap, &amp;pe32);   
+    &#125;  
+    CloseHandle(hProcessSnap);   
+    return FALSE;  
+&#125;  
+</code></pre>
+<h2 id="识别调试器的行为"><a href="#识别调试器的行为" class="headerlink" title="识别调试器的行为"></a>识别调试器的行为</h2><ul>
+<li><strong>软件断点检查</strong></li>
+</ul>
+<p>调试器设置软件断点的基本机制是使用软件中断指令INT 3（0xCC）临时替换运行程序中的一条指令，所以可能通过在代码查找机器码0xCC来判断是否被调试。</p>
+<pre><code class="c++">//repne scasb指令用于在一段数据缓冲区中搜索一个字节。
+BOOL CheckDebug()  
+&#123;  
+    PIMAGE_DOS_HEADER pDosHeader;  
+    PIMAGE_NT_HEADERS32 pNtHeaders;  
+    PIMAGE_SECTION_HEADER pSectionHeader;  
+    DWORD dwBaseImage = (DWORD)GetModuleHandle(NULL);   
+    pDosHeader = (PIMAGE_DOS_HEADER)dwBaseImage;  
+    pNtHeaders = (PIMAGE_NT_HEADERS32)((DWORD)pDosHeader + pDosHeader-&gt;e_lfanew);  
+    pSectionHeader = (PIMAGE_SECTION_HEADER)((DWORD)pNtHeaders + sizeof(pNtHeaders-&gt;Signature) + sizeof(IMAGE_FILE_HEADER) +   
+                     (WORD)pNtHeaders-&gt;FileHeader.SizeOfOptionalHeader);  
+    DWORD dwAddr = pSectionHeader-&gt;VirtualAddress + dwBaseImage;   
+    DWORD dwCodeSize = pSectionHeader-&gt;SizeOfRawData;      
+    BOOL Found = FALSE;  
+    __asm  
+    &#123;  
+        cld               
+        mov     edi,dwAddr  
+        mov     ecx,dwCodeSize  
+        mov     al,0CCH   
+        repne   scasb  
+        jnz     NotFound  
+        mov Found,1  
+NotFound:           
+    &#125;  
+    return Found;  
+&#125;  
+</code></pre>
+<ul>
+<li><strong>硬件断点检查</strong></li>
+</ul>
+<p>OD中通过F2设置软件断点，ALT+F2设置硬件断点。设置硬件断点的基本机制是有DR八个寄存器，前四个用来设置断点，DR4和DR5由系统用保留，DR6和DR7用于记录断点的相关属性。所以，可以通过探测寄存器的值来判断是否被调试。</p>
+<pre><code class="c++">BOOL CheckDebug()  
+&#123;  
+    CONTEXT context;    
+    HANDLE hThread = GetCurrentThread();    
+    context.ContextFlags = CONTEXT_DEBUG_REGISTERS;    
+    GetThreadContext(hThread, &amp;context);    
+    if (context.Dr0 != 0 || context.Dr1 != 0 || context.Dr2 != 0 || context.Dr3!=0)     
+    &#123;    
+        return TRUE;    
+    &#125;    
+    return FALSE;    
+&#125; 
+</code></pre>
+<ul>
+<li><strong>执行代码校验和检查</strong></li>
+</ul>
+<p>调试过程中可能存在对栈堆的修改，其哈希值就会被显著改变。将运行时计算得到的哈希值与存储的原始哈希值进行比对。如果两个哈希值相等，则代码未被篡改；如果不相等，说明代码可能被恶意篡改了。</p>
+<ul>
+<li><strong>时钟检测</strong></li>
+</ul>
+<p>调试过程中，进程的运行速度会降低。因此，记录一段操作前后的时间戳，通过比较这两个时间戳，可以判断程序是否被调试。</p>
+<p><code>rdtsc</code>指令返回至系统重新启动以来的时钟数，并且将其作为一个64位的值存入EDX和EAX中。</p>
+<pre><code class="c++">BOOL CheckDebug()  
+&#123;  
+    DWORD time1, time2;  
+    __asm  
+    &#123;  
+        rdtsc  
+        mov time1, eax  
+        rdtsc  
+        mov time2, eax  
+    &#125;  
+    if (time2 - time1 &lt; 0xff)  
+    &#123;  
+        return FALSE;  
+    &#125;  
+    else  
+    &#123;  
+        return TRUE;  
+    &#125;  
+&#125; 
+</code></pre>
+<p><code>QueryPerformanceCounter</code>和<code>GetTickCount</code>函数</p>
+<pre><code class="c++">//GetTickCount函数返回最近系统重启时间与当前时间的相差毫秒数(由于时钟计数器的大小原因，计数器每49.7天就被重置一次)。
+BOOL CheckDebug()  
+&#123;  
+    DWORD time1 = GetTickCount();  
+    __asm  
+    &#123;  
+        mov     ecx,10             
+        mov     edx,6                 
+        mov     ecx,10  
+    &#125;  
+    DWORD time2 = GetTickCount();  
+    if (time2-time1 &gt; 0x1A)  
+    &#123;  
+        return TRUE;  
+    &#125;  
+    else  
+    &#123;  
+        return FALSE;  
+    &#125;  
+&#125; 
+</code></pre>
+<ul>
+<li><strong>判断父进程是否是explorer.exe</strong></li>
+</ul>
+<p>一般双击运行的进程的父进程都是explorer.exe，但是如果进程被调试父进程则是调试器进程。也就是说如果父进程不是explorer.exe则可以认为程序正在被调试。</p>
+<p><img src="/D:/hexo/J47erry/source/images/image-20241029162224290.png" alt="image-20241029162224290"></p>
+<p><img src="/D:/hexo/J47erry/source/images/image-20241029162316374.png" alt="image-20241029162316374"></p>
+<ul>
+<li><strong>判断startupinfo信息</strong></li>
+</ul>
+<p>与上条类似，父进程explorer.exe在创建进程的时候，会设置startupinfo的值为0，如果父进程不是explorer.exe，这个结构的值就不会为0。</p>
+<pre><code class="c++">BOOL CheckDebug()  
+&#123;  
+    STARTUPINFO si;  
+    GetStartupInfo(&amp;si);  
+    if (si.dwX!=0 || si.dwY!=0 || si.dwFillAttribute!=0 || si.dwXSize!=0 || si.dwYSize!=0 || si.dwXCountChars!=0 || si.dwYCountChars!=0)  
+    &#123;  
+        return TRUE;  
+    &#125;  
+    else  
+    &#123;  
+        return FALSE;  
+    &#125;  
+&#125;  
+</code></pre>
+<ul>
+<li><strong>判断是否具有SeDebugPrivilege权限</strong></li>
+</ul>
+<p>调试器作为父进程的时候会有SeDebugPrivilege权限，如果父进程为调试器，则被调试的进程也会继承SeDebugPrivilege的权限，所以可以通过查看进程的权限来判断是否被调试。</p>
+<h2 id="干扰调试器的功能"><a href="#干扰调试器的功能" class="headerlink" title="干扰调试器的功能"></a>干扰调试器的功能</h2><ul>
+<li><strong>使用TLS回调</strong></li>
+</ul>
+<p> TLS 回调函数会在每个线程创建或终止时自动执行.</p>
+<p><img src="/D:/hexo/J47erry/source/images/image-20241029172038912.png" alt="image-20241029172038912"></p>
+<p>在IDA Pro中按Ctrl+E快捷键看到二进制的入口点，该组合键的作用是显示应用程序所有的入口点，其中包括TLS回调。双击函数名可以浏览回调函数。</p>
+<ul>
+<li><strong>插入中断</strong></li>
+</ul>
+<p>因为调试器使用<code>INT 3</code>来设置软件断点，所以一种反调试技术就是在合法代码段中插入0xCC(INT 3)欺骗调试器，使其认为这些0xCC机器码是自己设置的断点。</p>
+<pre><code class="c++">BOOL CheckDebug()  
+&#123;  
+      __try  
+      &#123;  
+            __asm int 3  
+      &#125;  
+      __except(1)  
+      &#123;  
+            return FALSE;  
+      &#125;  
+      return TRUE;  
+&#125;
+</code></pre>
+<p>双字节操作码<code>0xCD03</code>也可以产生INT 3中断，这是恶意代码干扰WinDbg调试器的有效方法。</p>
+<pre><code class="c++">BOOL CheckDebug()  
+&#123;  
+      __try  
+      &#123;  
+            __asm  
+            &#123;  
+                  __emit 0xCD  
+                  __emit 0x03  
+            &#125;  
+      &#125;  
+      __except(1)  
+      &#123;  
+            return FALSE;  
+      &#125;  
+      return TRUE;   
+&#125; 
+</code></pre>
+<p><code>INT 2D</code>原为内核模式中用来触发断点异常的指令，也可以在用户模式下触发异常。但程序调试运行时不会触发异常，只是忽略。程序调试运行时，执行INT 2D之后不会运行SEH，而是跳过NOP，把bDebugging标志设置为1，跳转到normal_code；程序正常运行时，执行INT 2D之后触发SEH，在异常处理器中设置EIP并把bDebugging标志设置为0。</p>
+<pre><code class="c++">BOOL CheckDebug()  
+&#123;  
+    BOOL bDebugging = FALSE;  
+    __asm &#123;  
+        // install SEH  
+        push handler  
+        push DWORD ptr fs:[0]  
+        mov DWORD ptr fs:[0], esp        
+        int 0x2d  
+        nop  
+        mov bDebugging, 1  
+        jmp normal_code  
+handler:  
+        mov eax, dword ptr ss:[esp+0xc]  
+        mov dword ptr ds:[eax+0xb8], offset normal_code  
+        mov bDebugging, 0  
+        xor eax, eax  
+        retn  
+normal_code:  
+        //   remove SEH  
+        pop dword ptr fs:[0]  
+        add esp, 4  
+    &#125;  
+    printf(&quot;Trap Flag (INT 2D)\n&quot;);  
+    if( bDebugging )  return 1;  
+    else              return 0;  
+&#125; 
+</code></pre>
+<p>片内仿真器(ICE)断点指令<code>ICEBP</code>(操作码0xF1)是Intel未公开的指令之一。</p>
+<pre><code class="c++">BOOL CheckDebug()  
+&#123;  
+      __try  
+      &#123; 
+            __asm __emit 0xF1  
+      &#125;  
+      __except(1)  
+      &#123;  
+            return FALSE;  
+      &#125;  
+      return TRUE;  
+&#125; 
+</code></pre>
+<ul>
+<li><strong>利用异常</strong></li>
+</ul>
+<p>当程序运行时，如果遇到无法处理的情况，就会抛出异常，被调试器接收处理，调试器通常会暂停程序执行，进而处理接收的异常，如果程序异常处理机制没有接收到异常，就说明可能正在被调试。所以，有的恶意软件可以通过故意引发异常，来让调试器捕获并处理。</p>
+<p><code>RaiseException</code>函数产生的若干不同类型的异常可以被调试器捕获。</p>
+<pre><code class="c++">BOOL TestExceptionCode(DWORD dwCode)  
+&#123;  
+      __try  
+      &#123;  
+            RaiseException(dwCode, 0, 0, 0);  
+      &#125;  
+      __except(1)  
+      &#123;  
+           return FALSE;  
+      &#125;  
+      return TRUE;  
+&#125;  
+BOOL CheckDebug()  
+&#123;  
+      return TestExceptionCode(DBG_RIPEXCEPTION);      
+&#125; 
+</code></pre>
+<p><code>SetUnhandledExceptionFilter</code>函数可以修改系统最后的异常处理器。</p>
+<p><code>EFLAGS</code>寄存器的第八个比特位是陷阱标志位。如果设置了，就会产生一个单步异常。</p>
+<h2 id="调试器的漏洞"><a href="#调试器的漏洞" class="headerlink" title="调试器的漏洞"></a>调试器的漏洞</h2><ul>
+<li><strong>PE头漏洞</strong></li>
+</ul>
+<ol>
+<li>PE文件的头部<code>IMAGE_OPTIONAL_HEADER</code>的结构：DataDirectory数组的大小被设置为IMAGE_NUMBEROF_DIRECTORY_ENTRIES，它等于0x10。因为DataDirectory数组不足以容纳超过0x10个目录项，所以当NumberOfRvaAndSizes大于0x10时，Windows加载器将会忽略NumberOfRvaAndSizes。OllyDbg遵循了这个标准，并且无论NumberOfRvaAndSizes是什么值，OllyDbg都使用它。因此，设置NumberOfRvaAndSizes为一个超过0x10的值，会导致在程序退出前，OllyDbg对用户弹出一个窗口。如图所示，使用LordPE打开可执行文件，修改RVA数及大小并保存，再用OllyDbg打开，会提示错误Bad or unknown format of 32-bit executable file。<img src="/D:/hexo/J47erry/source/images/image-20241029164737248.png" alt="image-20241029164737248"></li>
+<li>节头部<code>IMAGE_SECTION_HEADER</code>的结构：Windows加载器使用VirtualSize和SizeOfRawData中的最小值将节数据映射到内存。如果SizeOfRawData大于VirtualSize，则仅将VirtualSize大小的数据复制入内存，忽略其余数据。因为OllyDbg仅使用SizeOfRawData，所以设置SizeOfRawData为一个类似0x77777777的大数值时，会导致OllyDbg崩溃。<img src="/D:/hexo/J47erry/source/images/image-20241029164750846.png" alt="image-20241029164750846"></li>
+</ol>
+<ul>
+<li><strong>OutputDebugString漏洞</strong></li>
+</ul>
+<p>恶意代码常尝试利用OllyDbg1.1的格式化字符串漏洞，为OutputDebugString函数提供一个%s字符串的参数，让OllyDbg崩溃。因此，需要注意程序中可疑的OutputDebugString调用，例如OutputDebugString(“%s%s%s%s%s%s%s%s%s”)。如果执行了这个调用，OllyDbg将会崩溃。</p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/xiao_yi_xiao/article/details/121762629">反调试技术总结(看雪)-CSDN博客</a></p>
+
+    </div>
+
+</div>
+                <div class="footer">
+    <span>Copyright © 2022 J47erry&#39;S BLOG</span>
+    <span>Theme Designed By <a target="_blank" href="https://zheli.design/one-paper">這Li</a></span>
+</div>
+
+
+<link rel="stylesheet" href="/css/a11y-dark.min.css">
+
+
+<script src="/js/highlight.min.js"></script>
+
+
+<script src="/js/highlightjs-line-numbers.js"></script>
+
+
+<script>
+    hljs.initHighlightingOnLoad();
+    hljs.initLineNumbersOnLoad();
+</script>
+
+            </div>
+        </div>
+    </body>
+</html>
