@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
+    <link rel="alternate icon" type="image/png" href="/img/favicon.png">
+    <title>J47erry&#39;S BLOG | 杰歪</title>
+    
+<link rel="stylesheet" href="/css/reset.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+<link rel="stylesheet" href="/css/markdown.css">
+
+    
+<link rel="stylesheet" href="/css/fonts.css">
+
+<meta name="generator" content="Hexo 6.2.0"></head>
+    <body>
+        <div class="paper">
+            <div class="paper-main">
+                
+                    <div class="post-header">
+    <a class="logo" href="/">J47erry&#39;S BLOG</a>
+    <a class="go-home" href="/">
+        <svg width="8" height="14" viewBox="0 0 8 14">
+            <path d="M7 1L1 7l6 6" stroke="#000" stroke-width="2" fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </a>
+</div>
+                
+                <div class="post-main">
+
+    
+        <div class="post-main-title">
+            
+        </div>
+        <div class="post-meta">
+            2025-07-22
+        </div>
+    
+
+    <div class="post-md">
+        <h1 id="Yara规则"><a href="#Yara规则" class="headerlink" title="Yara规则"></a>Yara规则</h1><p>前置知识确保了解<em><strong>正则表达式</strong></em>。</p>
+<p><u>文献参考于Detection of Malware by Using YARA Rules.</u></p>
+<p>Yara基本规则：<code>meta</code>，<code>strings</code>，<code>condition</code>。</p>
+<p><code>meta</code>：可选，通常用于存储与规则相关的元信息，如规则的描述、作者、创建日期等。</p>
+<p><code>strings</code>：定义了需要匹配的字符串模式。</p>
+<p><code>condition</code>：定义了触发规则的条件。Yara会根据此条件在文件或内存中查找模式。</p>
+<p><strong>demo样式：</strong></p>
+<pre><code class="markdown">Rule&lt;name&gt;:the name of the rule
+
+Meta:Description of the rule like data created, author etc,
+
+String:The actual value/strings which we want to search.This could be Hex,String or Regex.
+
+Condition:The entire logic of the rule.
+</code></pre>
+<p><strong>简单用例：</strong></p>
+<pre><code class="yaml">//这条规则判断a和b字符串出现的次数，
+//例如，#a语法用于表示$a在目标文件或数据中出现的次数
+rule Count
+&#123;
+    strings：
+      $a = &quot;javon&quot;
+      $b = &quot;cs466&quot;
+    condition:
+      #a == 6 or #b &gt; 10 
+&#125;
+
+//这条规则用来判断文件大小是否大于25KB
+rule FileSize
+&#123;
+  condition:
+    filesize &gt; 25KB
+&#125;
+
+//这条规则用来判断目标文件或者数据中至少满足三个字符串
+//例如，&amp;a语法用于引用$a
+//例如，of用于检查字符串满足条件的数量
+rule SetStrings
+&#123;
+  strings:
+    $a = &quot;cs466&quot;
+    $b = &quot;is&quot;
+    $c = &quot;awesome&quot;
+    $d = &quot;not&quot;
+   condition:
+     3 of (&amp;a,&amp;b,&amp;c, &amp;d)
+&#125;
+
+//这条规则用来匹配字符串,十六进制的字符串,UTF-8编码的unicode字符以及正则表达式
+rule HexString
+&#123;
+  strings:
+    $my_text_string = &quot;some text can be here&quot;
+    $my_hex_string = &#123; 74 68 69 73 20 69 73 20 6E 6F 74 20 61
+    20 76 69 72 75 73 &#125;
+    
+  condition:
+    $my_text_string or $my_hex_string
+&#125;
+
+//这条规则用来排除已知的良性模式，减少误报
+rule Exclude
+&#123;
+  strings:
+    ·······
+  
+  condition:
+    &amp;str1 and not $good_str
+&#125;
+</code></pre>
+<p><strong>灵活性和复杂性提升：</strong></p>
+<pre><code class="typescript">//匹配复杂模式
+  strings:
+    $regex1 = /cmd\.exe\s+/i
+
+//模糊匹配
+  strings:
+    $regx2 = /malware_[A-Za-z0-9]&#123;5&#125;/
+    
+//捕获组和前后文
+  strings:
+    $regex3 = /User\s+Agent:\s+Mozilla\/\d+\.\d+/
+
+//结合其他字符串
+  condition:
+    $str1 and $regex1
+    
+//逻辑运算符:and、or、not
+  condition:
+    $str1 and ($str2 or %str3)
+    
+//算术运算
+  condition:
+    filesize &gt; 1MB and $str1
+    
+//计数和数量：使用#符号对字符串出现的次数进行判断
+  condition:
+    #strings &gt; 5
+    
+//范围和位置：使用of、in等关键字限制字符串出现的范围和位置
+  condition:
+    any of ($a,$b,$c) and unit16(0) == 0x5A4D
+    
+//集合和列表：all of、any of、none of集合运算，用于字符串列表
+  condition:
+    all od them
+
+//函数和内置操作：使用内置函数和操作符
+  condition:
+    pe.is_exe and filesize &lt; 5MB and $str1
+</code></pre>
+<p><strong>实际用例：</strong></p>
+<pre><code class="yaml">//这条规则用于检测特定的HTTP请求
+//例如，$header at 0确保请求方法出现在请求的开头
+//例如，$str* 确保请求中至少包含str1或str2字符串
+rule test
+&#123;
+  meta:
+    ........
+  strings:
+    $header = /(GET|POST)/
+    $url = &quot;/u8cloud/openapi/uapbd.refdef.query&quot;
+    $stt = /\&quot;refName\&quot;\:[\S\s]&#123;1,40&#125;(DELAY|select|union|sleep|from|and|concat|sqlvarbasetostr)/ nocase
+    $str1 = /appcode=[a-zA-Z0-9]+/
+    $str2 = /isEncrypt=[a-zA-Z0-9]+/
+  condition:
+    $header at 0 and $url and (1 of ($str*)) and $stt
+&#125;
+</code></pre>
+<p>在$stt中，正则小课堂：</p>
+<ul>
+<li><code>\&quot;refName\&quot;\</code>：匹配json字段refName及其冒号。</li>
+<li>[\S\s]{1,40}：匹配1到40个任意字符串（包括空白字符和非空白字符）。</li>
+<li><code>(DELAY|select|union|sleep|from|and|concat|sqlvarbasetostr)</code>：匹配以上SQL注入关键字之一。</li>
+<li><code>nocase</code>：不区分大小写，即匹配时不考虑大小写。</li>
+</ul>
+<p><strong>扩展的Yara规则</strong></p>
+<p>例如，检查PE文件的其他特征，如魔法数、文件大小、节表和导入表等。</p>
+<pre><code class="yaml">rule ExtendedExampleRule &#123;
+    meta:
+    ·······
+    
+    condition:
+        // 检查PE文件的魔数
+        uint16(0) == 0x5A4D and
+        
+        // 检查PE文件的签名
+        uint32(uint32(0x3C)) == 0x00004550 and
+
+        // 检查文件大小
+        filesize &gt; 1024
+&#125;
+</code></pre>
+<p>一些文件的Magic Numbers(文件头部的特定字节序列)：</p>
+<table>
+<thead>
+<tr>
+<th>Applications</th>
+<th>Type</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Executable file</td>
+<td>.exe</td>
+<td>4D5A\[MZ]&amp;#xD;</td>
+</tr>
+<tr>
+<td>RAR file</td>
+<td>.rar</td>
+<td>52 61 72 21 1A 07&amp;#x20; 00\[Rar!…]</td>
+</tr>
+<tr>
+<td>SYS file</td>
+<td>.sys</td>
+<td>4D5A\[MZ]&amp;#xD;</td>
+</tr>
+<tr>
+<td>Help file</td>
+<td>.hlp</td>
+<td>3F SF 03 00 \[?..]</td>
+</tr>
+<tr>
+<td>VMWare Disk file</td>
+<td>.vmdk</td>
+<td>46 44 4D 56&amp;#x20; \[KDMV]</td>
+</tr>
+<tr>
+<td>Outlook post Office file</td>
+<td>.pst</td>
+<td>21 42 44 4E 42&amp;#x20; \[!BDNB]</td>
+</tr>
+<tr>
+<td>PDF Document</td>
+<td>.pdf</td>
+<td>25 50 44 46 \[%PDF]&amp;#xD;</td>
+</tr>
+<tr>
+<td>Word Document</td>
+<td>.doc</td>
+<td>Do CF 11 Eo A1 B1&amp;#x20; 1A E1</td>
+</tr>
+<tr>
+<td>RTF Document</td>
+<td>.rtf</td>
+<td>7B SC&amp;#x20; 72746631\[{rf1}]</td>
+</tr>
+<tr>
+<td>Excel Document</td>
+<td>.xls&amp;#x20;</td>
+<td>Do CF 11 Eo A1 B1&amp;#x20; 1A E1</td>
+</tr>
+<tr>
+<td>Powerpoint Document</td>
+<td>.ppt</td>
+<td>Do CF 11 Eo A1 B1&amp;#x20; 1A E1</td>
+</tr>
+<tr>
+<td>Visio Document</td>
+<td>.vsd</td>
+<td>Do CF 11 Eo A1 B1&amp;#x20; 1A E1</td>
+</tr>
+<tr>
+<td>DOCX(Office 2010)</td>
+<td>.docx</td>
+<td>50 4B 03 \[PK]</td>
+</tr>
+<tr>
+<td>XLSX(Office 2010)</td>
+<td>.xlsx&amp;#x20;</td>
+<td>50 4B 03 \[PK]</td>
+</tr>
+<tr>
+<td>PPTX(Office 2010)</td>
+<td>.pptx</td>
+<td>50 4B 03 \[PK]</td>
+</tr>
+<tr>
+<td>Microsoft Database</td>
+<td>.mdb</td>
+<td>53 74 61 6E 64 61 72&amp;#x20; 64 20 4a 65 74</td>
+</tr>
+</tbody></table>
+<p><strong>手动编写yara规则并且测试</strong>(Windows)</p>
+<p>运行yara扫描：<code>yara64.exe example.yar D:/yara-master-1798-win64/yarac64.exe</code></p>
+<p><img src="/./../images/image-20250722132240026.png" alt="image-20250722132240026"></p>
+<p>输出详细信息：<code>yara64.exe --print-meta --print-strings example.yar D:/yara-master-1798-win64/yarac64.exe</code></p>
+<p><img src="/./../images/image_ojahIr43FT.png" alt="image_ojahIr43FT"></p>
+<p>匹配规则库：<code>yara64.exe C:\yara_rules\*.yar C:\malware\sample.exe</code></p>
+<p><strong>自动化生成yara规则</strong></p>
+<p>文献参考于Malware Detection Using Automated Generation of Yara Rules on Dynamic Features.</p>
+<p>安全分析工程师根据专业知识选择特定的有效规则；</p>
+<p>YarGen工具依赖于大量的启发式和字符串特征，并且具有不同程度的有效性；</p>
+<p>YarGen原理解析：</p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/whatday/article/details/107719938" title="恶意软件 自动化规则提取工具 yargen 原理分析-CSDN博客">恶意软件 自动化规则提取工具 yargen 原理分析-CSDN博客</a></p>
+<p><strong>扩展</strong></p>
+<p>类似规则还有Nuclei模板</p>
+<p>Nuclei 主要用于自动化漏洞扫描和 Web 应用安全检查，而 YARA-Gen 主要用于自动生成 YARA 规则，检测恶意软件样本；</p>
+<p>基本原理：Nuclei 通过发送 HTTP&#x2F;HTTPS 请求到目标系统，并根据预定义的模板检查响应，以检测特定的漏洞或安全问题。Nuclei 的核心是模板，每个模板定义了一个特定的检查逻辑。</p>
+<p><strong>demo示例：</strong></p>
+<pre><code class="yaml">id: example-http-response-check
+
+info:
+  name: Example HTTP Response Check
+  author: John Doe
+  severity: medium
+  description: Detects a specific string in the HTTP response
+  reference:
+    - https://example.com/vulnerability
+  tags: http,response,example
+
+requests:
+  - method: GET
+    path:
+      - &quot;&#123;&#123;BaseURL&#125;&#125;/vulnerable-page&quot;
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - &quot;vulnerable_string_1&quot;
+          - &quot;vulnerable_string_2&quot;
+        condition: or
+
+      - type: status
+        status:
+          - 200
+</code></pre>
+<ol>
+<li>ID：模板的唯一标识符；</li>
+<li>Info：包含模板的元数据，如名称、作者、描述、分类等</li>
+<li>Requests：定义HTTP请求和响应处理逻辑</li>
+<li>Matchers：定义匹配条件，用于检测漏洞或安全问题</li>
+</ol>
+
+    </div>
+
+</div>
+                <div class="footer">
+    <span>Copyright © 2022 J47erry&#39;S BLOG</span>
+    <span>Theme Designed By <a target="_blank" href="https://zheli.design/one-paper">這Li</a></span>
+</div>
+
+
+<link rel="stylesheet" href="/css/a11y-dark.min.css">
+
+
+<script src="/js/highlight.min.js"></script>
+
+
+<script src="/js/highlightjs-line-numbers.js"></script>
+
+
+<script>
+    hljs.initHighlightingOnLoad();
+    hljs.initLineNumbersOnLoad();
+</script>
+
+            </div>
+        </div>
+    </body>
+</html>
