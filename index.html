@@ -38,19 +38,6 @@
                 <div class="post-list">
     
     <div class="post">
-        <a class="post-title" href="/2025/07/22/Untitled/">#基于HTTP/2.0的恶意流量分析(CVE-2023-44487)</a>
-        <div class="post-except">
-            捕捉到一段基于HTTP 2.0 的恶意payload，记录分析学习结果。
-
-HTTP&#x2F;2.0前置知识
-HTTP&#x2F;2.0所有性能增强的核心在于添加了新的二进制分帧层，如上图所示，第二版依旧使用传统的请求方法、状态码和头字段等规则，但是修改了报文传输格式。它将所有传输的信息分割为更小的信息和帧，并采用二进制格式对它们编码，这里的头压缩算法是HPACK，理解这个算法有利于我们进行解码操作。
-HTTP&#x2F;2.0 基于二进制分帧层，允许在共享TCP连接的基础
-            <a class="read-more" href="/2025/07/22/Untitled/"> ... </a>
-        </div>
-        <div class="post-date">2025.07.22</div>
-    </div>
-    
-    <div class="post">
         <a class="post-title" href="/2025/07/22/Yara%E8%A7%84%E5%88%99/">#匹配恶意流量——Yara规则</a>
         <div class="post-except">
             
@@ -163,6 +150,37 @@ CheckRemoteDebuggerPresent同IsDebuggerPresent几乎一致。它不仅可以探�
     </div>
     
     <div class="post">
+        <a class="post-title" href="/2023/12/31/2023/">#2023，辛苦了</a>
+        <div class="post-except">
+            原本会以为是没有什么东西可以写，所以一直拖延，没成想，当对着屏幕的时候，反而是因为想对这一年说的话太多了，思绪纷纷扰扰。
+整理整理，只化为了一句标题：2023，辛苦了。
+自从开始过以2字开头的生日，除了感叹时间过得好快，于内心并无太大波澜。细索这一年，猛觉原来过完2字开头的生日，意味着你自己要做的选择多了很多。
+结束，亦是开始2023年12月23日，开启了属于我这一届的考研。不知道为什么对于这次的大考，并没有特别紧张，反而还多出了一些心思去观察一起考试的人。从候考开始，有抓紧
+            <a class="read-more" href="/2023/12/31/2023/"> ... </a>
+        </div>
+        <div class="post-date">2023.12.31</div>
+    </div>
+    
+    <div class="post">
+        <a class="post-title" href="/2022/12/31/Untitled/">#回首2022：也无风雨也无晴</a>
+        <div class="post-except">
+            从去年写了年度总结开始，就觉得每一年对自己进行一个反思和思考很有意义。但今年是流水账，想到哪写哪吧哈哈哈哈。
+回顾一整年，自身原因加上环境原因，使得焦虑作为主旋律贯穿始终，但是更多的还是幸运加持。
+还是先列举一下今年的月份纪（印象深刻的月份发生的事情）：
+一月：开始学习
+六月：面试、实习
+七月：工作、认识朋友
+八月：学技术、做一些疯狂的事
+九月：回学校学习
+十二月：旅游
+
+写这篇的时候已经过完年了（emmm我拖延了。。。），最开始确定这一年的基调的时候，总感觉过的很焦虑很匆忙
+            <a class="read-more" href="/2022/12/31/Untitled/"> ... </a>
+        </div>
+        <div class="post-date">2022.12.31</div>
+    </div>
+    
+    <div class="post">
         <a class="post-title" href="/2022/12/10/Dll%E5%8A%AB%E6%8C%81%E5%88%9D%E4%BD%93%E9%AA%8C/">#Dll劫持初体验</a>
         <div class="post-except">
             Dll劫持初体验DLL：动态链接库。DLL 是一个包含可由多个程序同时使用的代码和数据的库。例如，在 Windows 操作系统中，Comdlg32 DLL 执行与对话框有关的常见函数。因此，每个程序都可以使用该 DLL 中包含的功能来实现“打开”对话框。这有助于促进代码重用和内存的有效使用。dll文件和exe文件一样都是PE文件。
@@ -182,23 +200,6 @@ String：  &#x2F;&#x2F;可以查找所有白名单程序
             <a class="read-more" href="/2022/12/05/Bypass-UAC%E4%B9%8B%E5%88%9D%E4%BD%93%E9%AA%8C/"> ... </a>
         </div>
         <div class="post-date">2022.12.05</div>
-    </div>
-    
-    <div class="post">
-        <a class="post-title" href="/2022/11/24/%E9%9A%90%E5%86%99%E6%9C%AF/">#隐写过360、火绒</a>
-        <div class="post-except">
-            隐写过360、火绒一些简单的隐写demo过静态免杀。
-
-0x00 图种利用copy命令，可以将两个文件以二进制方式连接起来，很显然，也可以将木马插入到图片里面，尝试隐写。
-copy/b C:\...\...\Desktop\OIP-A.png + C:\...\...\Desktop\shell.php 123.png
-
-生成123.png图片里面就会存在连接密码。
-通过360和火绒查杀，并没有检查出病毒。
-上传看看。（感觉VT结果怪怪的。。。）
-换成简单的一句话木马，试试。
-            <a class="read-more" href="/2022/11/24/%E9%9A%90%E5%86%99%E6%9C%AF/"> ... </a>
-        </div>
-        <div class="post-date">2022.11.24</div>
     </div>
     
 </div>
