@@ -38,16 +38,30 @@
                 <div class="post-list">
     
     <div class="post">
-        <a class="post-title" href="/2025/07/22/Yara%E8%A7%84%E5%88%99/"></a>
+        <a class="post-title" href="/2025/07/22/Untitled/">#基于HTTP/2.0的恶意流量分析(CVE-2023-44487)</a>
         <div class="post-except">
-            Yara规则前置知识确保了解正则表达式。
+            捕捉到一段基于HTTP 2.0 的恶意payload，记录分析学习结果。
+
+HTTP&#x2F;2.0前置知识
+HTTP&#x2F;2.0所有性能增强的核心在于添加了新的二进制分帧层，如上图所示，第二版依旧使用传统的请求方法、状态码和头字段等规则，但是修改了报文传输格式。它将所有传输的信息分割为更小的信息和帧，并采用二进制格式对它们编码，这里的头压缩算法是HPACK，理解这个算法有利于我们进行解码操作。
+HTTP&#x2F;2.0 基于二进制分帧层，允许在共享TCP连接的基础
+            <a class="read-more" href="/2025/07/22/Untitled/"> ... </a>
+        </div>
+        <div class="post-date">2025.07.22</div>
+    </div>
+    
+    <div class="post">
+        <a class="post-title" href="/2025/07/22/Yara%E8%A7%84%E5%88%99/">#匹配恶意流量——Yara规则</a>
+        <div class="post-except">
+            
+前置知识确保了解正则表达式。
 文献参考于Detection of Malware by Using YARA Rules.
 Yara基本规则：meta，strings，condition。
 meta：可选，通常用于存储与规则相关的元信息，如规则的描述、作者、创建日期等。
 strings：定义了需要匹配的字符串模式。
 condition：定义了触发规则的条件。Yara会根据此条件在文件或内存中查找模式。
 demo样式：
-Rule&lt;name&gt;:the na
+Rule&lt;name&gt;:the name of
             <a class="read-more" href="/2025/07/22/Yara%E8%A7%84%E5%88%99/"> ... </a>
         </div>
         <div class="post-date">2025.07.22</div>
@@ -185,28 +199,6 @@ copy/b C:\...\...\Desktop\OIP-A.png + C:\...\...\Desktop\shell.php 123.png
             <a class="read-more" href="/2022/11/24/%E9%9A%90%E5%86%99%E6%9C%AF/"> ... </a>
         </div>
         <div class="post-date">2022.11.24</div>
-    </div>
-    
-    <div class="post">
-        <a class="post-title" href="/2022/11/15/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%A4%9A%E5%B1%82%E5%86%85%E7%BD%91%E6%89%93%E9%9D%B6/">#记一次多层内网渗透</a>
-        <div class="post-except">
-            记一次多层内网渗透好久之前的一次很简单内网靶场的打靶。
- ip扫描
-查看开放的端口服务，发现存在web服务的80端口。
-
-进行访问web网页，是thinkphp框架，可以进行工具盲打。
-写入一句话木马。然后访问写入的木马，结果发现木马post被过滤。
-将一句话木马进行base64编码，尝试绕过。
-木马写入，进行蚁剑连接。
-
-连接以后，执行终端发现只是普通权限。利用kali生成木马进行反弹上线。
-设置msf监听
-msfconsole
-
-use exploit/multi/han
-            <a class="read-more" href="/2022/11/15/%E8%AE%B0%E4%B8%80%E6%AC%A1%E5%A4%9A%E5%B1%82%E5%86%85%E7%BD%91%E6%89%93%E9%9D%B6/"> ... </a>
-        </div>
-        <div class="post-date">2022.11.15</div>
     </div>
     
 </div>
